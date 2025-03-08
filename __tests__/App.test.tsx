@@ -12,7 +12,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 describe('App Component', () => {
   test('renders correctly', async () => {
-    let root: ReactTestRenderer.ReactTestRenderer;
+    let root!: ReactTestRenderer.ReactTestRenderer;
+
 
     await ReactTestRenderer.act(async () => {
       root = ReactTestRenderer.create(<App />);
