@@ -1,3 +1,22 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json"
+  "extends": "@react-native/typescript-config/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    "types": ["react-native"],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"]
+    },
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "lib": ["es2017"],
+    "moduleResolution": "node16",
+    "module": "Node16",
+    "noEmit": true,
+    "strict": true,
+    "target": "esnext",
+    "customConditions": []
+  }
 }
