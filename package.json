@@ -40,7 +40,7 @@
     "@react-native/typescript-config": "0.78.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.2.0",
-    "@types/jest": "^29.5.13",
+    "@types/jest": "^29.5.14",
     "@types/react": "^19.0.0",
     "@types/react-native": "^0.73.0",
     "@types/react-test-renderer": "^19.0.0",
@@ -49,6 +49,10 @@
     "prettier": "2.8.8",
     "react-test-renderer": "19.0.0",
     "typescript": "^5.8.2"
+  },
+  "jest": {
+    "preset": "react-native",
+    "setupFilesAfterEnv": ["<rootDir>/__mocks__/@react-native-async-storage/async-storage.js"]
   },
   "engines": {
     "node": ">=18"
