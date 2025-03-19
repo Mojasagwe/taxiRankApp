@@ -52,7 +52,9 @@
   },
   "jest": {
     "preset": "react-native",
-    "setupFilesAfterEnv": ["<rootDir>/__mocks__/@react-native-async-storage/async-storage.js"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/__mocks__/@react-native-async-storage/async-storage.js"
+    ]
   },
   "engines": {
     "node": ">=18"
