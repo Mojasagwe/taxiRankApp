@@ -4,7 +4,7 @@ export interface User {
   lastName: string;
   email: string;
   phoneNumber: string;
-  preferredPaymentMethod: string;
+  preferredPaymentMethod: 'CASH' | 'CARD';
   createdAt: string;
   updatedAt: string;
 }
@@ -15,7 +15,7 @@ export interface RegisterRequest {
   email: string;
   phoneNumber: string;
   password: string;
-  preferredPaymentMethod: string;
+  preferredPaymentMethod: 'CASH' | 'CARD';
 }
 
 export interface LoginRequest {
@@ -28,7 +28,7 @@ export interface AuthResponse {
   message?: string;
   error?: string;
   data?: {
-    user: User;
+    rider: User;
     token: string;
   };
 }
@@ -40,5 +40,4 @@ export interface AuthContextType {
   login: (credentials: LoginRequest) => Promise<AuthResponse>;
   register: (userData: RegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
-  testAuth: () => Promise<boolean>;
 } 
