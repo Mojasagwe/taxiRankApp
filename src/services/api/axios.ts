@@ -1,24 +1,23 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../../types/auth';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../types/auth';
 import { Platform } from 'react-native';
 
-// Get the appropriate API URL based on platform
 const API_URL = Platform.select({
-  ios: 'http://localhost:3000',
-  android: 'http://10.0.2.2:3000',
-  default: 'http://localhost:3000',
+  ios: 'http://localhost:8080/api',
+  android: 'http://10.0.2.2:8080/api',
+  default: 'http://localhost:8080/api',
 });
 
 // Create axios instance with default config
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor to add auth token
+// Add token to requests if it exists
 api.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem('userToken');
@@ -32,28 +31,15 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle token expiration
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('userData');
-      // You might want to trigger a logout action here
-    }
-    return Promise.reject(error);
-  }
-);
-
 // Auth service
 export const authService = {
-  // Register user
+  // Register new user
   register: async (userData: RegisterRequest): Promise<AuthResponse> => {
     try {
-      console.log('Attempting registration with:', { email: userData.email });
       const response = await api.post<AuthResponse>('/auth/register', userData);
-      console.log('Registration response:', response.data);
+      console.log('Registration response:', response.data); // Debug log
       
+      // Store token after successful registration
       if (response.data.success && response.data.data?.rider) {
         try {
           // Store user data first
@@ -62,7 +48,6 @@ export const authService = {
           // Then store token if it exists
           if (response.data.data.token) {
             await AsyncStorage.setItem('userToken', response.data.data.token);
-            console.log('Successfully stored token and user data');
           } else {
             console.warn('No token received in registration response');
           }
@@ -74,11 +59,7 @@ export const authService = {
       }
       return response.data;
     } catch (error: any) {
-      console.error('Registration error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
+      console.error('Registration error:', error.response?.data || error);
       throw error.response?.data || { success: false, error: 'Registration failed' };
     }
   },
@@ -119,7 +100,7 @@ export const authService = {
   },
 
   // Get current user
-  getCurrentUser: async () => {
+  getCurrentUser: async (): Promise<AuthResponse> => {
     try {
       const response = await api.get<AuthResponse>('/auth/me');
       return response.data;
@@ -129,13 +110,12 @@ export const authService = {
   },
 
   // Logout user
-  logout: async () => {
+  logout: async (): Promise<AuthResponse> => {
     try {
       await AsyncStorage.removeItem('userToken');
       await AsyncStorage.removeItem('userData');
-      return { success: true };
+      return { success: true, message: 'Logged out successfully' };
     } catch (error: any) {
-      console.error('Logout error:', error);
       throw { success: false, error: 'Logout failed' };
     }
   },

@@ -56,18 +56,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
       setError(null);
+      console.log('Login attempt in context:', { email: credentials.email });
       const response = await authService.login(credentials);
+      console.log('Login response in context:', response);
+      
       if (response.success && response.data?.rider) {
-        const riderData = response.data.rider;
-        setUser(riderData);
-        await AsyncStorage.setItem('userData', JSON.stringify(riderData));
-        if (response.data && response.data.token) {
-          await AsyncStorage.setItem('userToken', response.data.token);
-        }
+        setUser(response.data.rider);
+        return response;
       }
-      return response;
+      
+      // If we get here, something went wrong
+      const errorMessage = response.error || 'Login failed';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } catch (error: any) {
-      setError(error.message || 'Login failed');
+      console.error('Login error in context:', error);
+      // Only set error if it's not an AsyncStorage error and not a warning
+      if (!error.message?.includes('AsyncStorage') && !error.message?.includes('non-critical')) {
+        const errorMessage = error.message || 'Login failed';
+        setError(errorMessage);
+      }
       throw error;
     }
   };

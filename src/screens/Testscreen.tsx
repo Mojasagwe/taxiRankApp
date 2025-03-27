@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, Button, ScrollView } from 'react-native';
-import api from '../services/api/axios';
+import { api } from '../services/api/axios';
 import { styles } from '../styles/testScreen.styles';
 
 // Define types for your data

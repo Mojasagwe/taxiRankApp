@@ -4,7 +4,7 @@ export interface User {
   lastName: string;
   email: string;
   phoneNumber: string;
-  preferredPaymentMethod: 'CASH' | 'CARD';
+  preferredPaymentMethod: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,7 +15,7 @@ export interface RegisterRequest {
   email: string;
   phoneNumber: string;
   password: string;
-  preferredPaymentMethod: 'CASH' | 'CARD';
+  preferredPaymentMethod: string;
 }
 
 export interface LoginRequest {
@@ -28,7 +28,7 @@ export interface AuthResponse {
   message?: string;
   error?: string;
   data?: {
-    rider: User;
+    user: User;
     token: string;
   };
 }
