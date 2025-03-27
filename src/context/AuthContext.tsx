@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/api/axios';
-import { AuthContextType, User, AuthResponse, RegisterRequest } from '../types/auth';
+import { AuthContextType, User, AuthResponse, RegisterRequest, LoginRequest } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -53,10 +53,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<AuthResponse> => {
+  const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
       setError(null);
-      const response = await authService.login(email, password);
+      const response = await authService.login(credentials);
       if (response.success && response.data?.rider) {
         const riderData = response.data.rider;
         setUser(riderData);
