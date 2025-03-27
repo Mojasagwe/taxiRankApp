@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/api/axios';
-import { AuthContextType, User, AuthResponse, RegisterRequest, LoginRequest } from '../types/auth';
+import { AuthContextType, User, AuthResponse, RegisterRequest } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -53,29 +53,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
+  const login = async (email: string, password: string): Promise<AuthResponse> => {
     try {
       setError(null);
-      console.log('Login attempt in context:', { email: credentials.email });
-      const response = await authService.login(credentials);
-      console.log('Login response in context:', response);
-      
+      const response = await authService.login(email, password);
       if (response.success && response.data?.rider) {
-        setUser(response.data.rider);
-        return response;
+        const riderData = response.data.rider;
+        setUser(riderData);
+        await AsyncStorage.setItem('userData', JSON.stringify(riderData));
+        if (response.data && response.data.token) {
+          await AsyncStorage.setItem('userToken', response.data.token);
+        }
       }
-      
-      // If we get here, something went wrong
-      const errorMessage = response.error || 'Login failed';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      return response;
     } catch (error: any) {
-      console.error('Login error in context:', error);
-      // Only set error if it's not an AsyncStorage error and not a warning
-      if (!error.message?.includes('AsyncStorage') && !error.message?.includes('non-critical')) {
-        const errorMessage = error.message || 'Login failed';
-        setError(errorMessage);
-      }
+      setError(error.message || 'Login failed');
       throw error;
     }
   };
