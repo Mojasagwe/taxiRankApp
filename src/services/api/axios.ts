@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../types/auth';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../../types/auth';
 import { Platform } from 'react-native';
 
 const API_URL = Platform.select({

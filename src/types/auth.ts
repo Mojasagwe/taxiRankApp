@@ -28,7 +28,7 @@ export interface AuthResponse {
   message?: string;
   error?: string;
   data?: {
-    user: User;
+    rider: User;
     token: string;
   };
 }
