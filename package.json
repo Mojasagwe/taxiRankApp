@@ -43,12 +43,6 @@
     "react-test-renderer": "18.2.0",
     "typescript": "5.0.4"
   },
-  "jest": {
-    "preset": "react-native",
-    "setupFilesAfterEnv": [
-      "<rootDir>/__mocks__/@react-native-async-storage/async-storage.js"
-    ]
-  },
   "engines": {
     "node": ">=18"
   }
