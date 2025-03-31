@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   Alert,
   ScrollView,
 } from 'react-native';
@@ -12,14 +10,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { RegisterRequest } from '../types/auth';
 import { styles } from '../styles/registerScreen.styles';
+import { AuthStackParamList } from '../navigation/AuthNavigator';
+import FormInput from '../components/inputs/FormInput';
+import PrimaryButton from '../components/buttons/PrimaryButton';
+import LinkButton from '../components/buttons/LinkButton';
 
-type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Home: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NavigationProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const RegisterScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -85,67 +81,68 @@ const RegisterScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Sign up to get started</Text>
-
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="First Name"
-          value={formData.firstName}
-          onChangeText={(value) => updateFormData('firstName', value)}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Last Name"
-          value={formData.lastName}
-          onChangeText={(value) => updateFormData('lastName', value)}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={formData.email}
-          onChangeText={(value) => updateFormData('email', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number"
-          value={formData.phoneNumber}
-          onChangeText={(value) => updateFormData('phoneNumber', value)}
-          keyboardType="phone-pad"
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={formData.password}
-          onChangeText={(value) => updateFormData('password', value)}
-          secureTextEntry
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleRegister}
-        >
-          <Text style={styles.buttonText}>Sign Up</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.linkButton}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.linkText}>
-            Already have an account? Sign in
-          </Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Sign up to get started</Text>
       </View>
-    </ScrollView>
+      
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.form}>
+          <FormInput
+            placeholder="First Name"
+            value={formData.firstName}
+            onChangeText={(value) => updateFormData('firstName', value)}
+            autoCapitalize="words"
+          />
+
+          <FormInput
+            placeholder="Last Name"
+            value={formData.lastName}
+            onChangeText={(value) => updateFormData('lastName', value)}
+            autoCapitalize="words"
+          />
+
+          <FormInput
+            placeholder="Email"
+            value={formData.email}
+            onChangeText={(value) => updateFormData('email', value)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <FormInput
+            placeholder="Phone Number"
+            value={formData.phoneNumber}
+            onChangeText={(value) => updateFormData('phoneNumber', value)}
+            keyboardType="phone-pad"
+          />
+
+          <FormInput
+            placeholder="Password"
+            value={formData.password}
+            onChangeText={(value) => updateFormData('password', value)}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <PrimaryButton
+            title="Sign Up"
+            onPress={handleRegister}
+          />
+
+          <LinkButton
+            title="Already have an account? Sign in"
+            onPress={() => navigation.navigate('Login')}
+          />
+          
+          <LinkButton
+            title="Back to start screen"
+            onPress={() => navigation.navigate('Landing')}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 

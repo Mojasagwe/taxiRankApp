@@ -2,41 +2,42 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { styles } from '../styles/loginScreen.styles';
-
-type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Home: undefined;
-};
+import { AuthStackParamList } from '../navigation/AuthNavigator';
+import FormInput from '../components/inputs/FormInput';
+import PrimaryButton from '../components/buttons/PrimaryButton';
+import LinkButton from '../components/buttons/LinkButton';
 
 type LoginScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
+  navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 };
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
+      setFormError(null);
+      setIsLoading(true);
+      
       // Validate all fields
       if (!email.trim() || !password.trim()) {
-        Alert.alert('Error', 'Please fill in all fields');
+        setFormError('Please fill in all fields');
         return;
       }
 
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        Alert.alert('Error', 'Please enter a valid email address');
+        setFormError('Please enter a valid email address');
         return;
       }
 
@@ -48,13 +49,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       const response = await login(credentials);
       
       if (!response.success) {
-        Alert.alert('Error', response.error || 'Login failed');
+        // Show alert for incorrect credentials
+        Alert.alert(
+          "Login Failed",
+          "Incorrect username or password. Please try again.",
+          [{ text: "OK" }]
+        );
+        setFormError(response.error || 'Login failed');
       }
     } catch (error: any) {
       // Don't show error popup for AsyncStorage errors
       if (!error.message?.includes('AsyncStorage') && !error.message?.includes('non-critical')) {
-        Alert.alert('Error', error.message || 'Login failed');
+        // Show alert for login errors
+        Alert.alert(
+          "Login Failed",
+          "Incorrect username or password. Please try again.",
+          [{ text: "OK" }]
+        );
+        setFormError(error.message || 'Login failed');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,38 +79,43 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       <Text style={styles.subtitle}>Sign in to continue</Text>
 
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
+        <FormInput
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          error={formError && !email.trim() ? 'Email is required' : undefined}
         />
 
-        <TextInput
-          style={styles.input}
+        <FormInput
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          error={formError && !password.trim() ? 'Password is required' : undefined}
         />
 
-        <TouchableOpacity
-          style={styles.button}
+        <PrimaryButton
+          title="Sign In"
           onPress={handleLogin}
-        >
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+          isLoading={isLoading}
+        />
 
-        <TouchableOpacity
-          style={styles.linkButton}
+        <LinkButton
+          title="Don't have an account? Sign up"
           onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.linkText}>
-            Don't have an account? Sign up
-          </Text>
-        </TouchableOpacity>
+        />
+        
+        <LinkButton
+          title="Register as a Taxi Rank Admin"
+          onPress={() => navigation.navigate('AdminRegister')}
+        />
+        
+        <LinkButton
+          title="Back to start screen"
+          onPress={() => navigation.navigate('Landing')}
+        />
       </View>
     </View>
   );

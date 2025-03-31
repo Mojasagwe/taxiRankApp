@@ -4,14 +4,18 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#333',
     marginBottom: 10,
-    textAlign: 'center',
+    textShadowColor: '#e3b040',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
   },
   subtitle: {
     fontSize: 16,
@@ -21,32 +25,6 @@ export const styles = StyleSheet.create({
   },
   form: {
     width: '100%',
-  },
-  input: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  linkButton: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#007AFF',
-    fontSize: 16,
+    maxWidth: 400,
   },
 }); 

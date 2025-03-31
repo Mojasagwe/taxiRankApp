@@ -1,12 +1,21 @@
 export interface User {
-  id: string;
+  id: string | number;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  preferredPaymentMethod: string;
+  preferredPaymentMethod?: string;
+  profilePicture?: string | null;
+  password?: string;
+  accountStatus?: string;
+  isVerified?: boolean;
+  rating?: number;
+  totalTrips?: number;
+  lastLogin?: string | null;
   createdAt: string;
   updatedAt: string;
+  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+  managedRanks?: string[];
 }
 
 export interface RegisterRequest {
@@ -28,7 +37,8 @@ export interface AuthResponse {
   message?: string;
   error?: string;
   data?: {
-    rider: User;
+    rider?: User;
+    user?: User;
     token: string;
   };
 }
@@ -41,4 +51,6 @@ export interface AuthContextType {
   register: (userData: RegisterRequest) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   testAuth: () => Promise<boolean>;
+  isAdmin: () => boolean;
+  isSuperAdmin: () => boolean;
 } 

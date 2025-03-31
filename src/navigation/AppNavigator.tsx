@@ -3,21 +3,24 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 
-// Import screens
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import HomeScreen from '../screens/HomeScreen';
+// Import navigators
+import AuthNavigator from './AuthNavigator';
+import CommuterNavigator from './CommuterNavigator';
+import AdminNavigator from './AdminNavigator';
+import SuperAdminNavigator from './SuperAdminNavigator';
 
+// Create a new RootStackParamList for the main navigator
 export type RootStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Home: undefined;
+  Auth: undefined;
+  Commuter: undefined;
+  Admin: undefined;
+  SuperAdmin: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const AppNavigator: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin, isSuperAdmin } = useAuth();
 
   if (loading) {
     // You might want to show a loading screen here
@@ -28,17 +31,17 @@ const AppNavigator: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          // Auth Stack
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
+          // Auth Navigator - screens for authentication flow
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        ) : isSuperAdmin() ? (
+          // Super Admin Navigator - screens for super admin users
+          <Stack.Screen name="SuperAdmin" component={SuperAdminNavigator} />
+        ) : isAdmin() ? (
+          // Admin Navigator - screens for rank admin users
+          <Stack.Screen name="Admin" component={AdminNavigator} />
         ) : (
-          // App Stack
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            {/* Add other authenticated screens here */}
-          </>
+          // Commuter Navigator - screens for regular commuter users
+          <Stack.Screen name="Commuter" component={CommuterNavigator} />
         )}
       </Stack.Navigator>
     </NavigationContainer>

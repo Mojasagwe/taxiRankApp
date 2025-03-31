@@ -60,9 +60,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('Login response in context:', response);
       
-      if (response.success && response.data?.rider) {
-        setUser(response.data.rider);
-        return response;
+      if (response.success) {
+        const userData = response.data?.user || response.data?.rider;
+        if (userData) {
+          setUser(userData);
+          return response;
+        }
       }
       
       // If we get here, something went wrong
@@ -86,10 +89,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.register(userData);
       console.log('Registration response in context:', response); // Debug log
       
-      if (response.success && response.data?.rider) {
-        const riderData = response.data.rider;
-        setUser(riderData);
-        return response;
+      if (response.success) {
+        const registeredUser = response.data?.user || response.data?.rider;
+        if (registeredUser) {
+          setUser(registeredUser);
+          return response;
+        }
       }
       
       // If we get here, something went wrong
@@ -121,6 +126,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const isAdmin = (): boolean => {
+    return user?.role === 'ADMIN';
+  };
+
+  const isSuperAdmin = (): boolean => {
+    return user?.role === 'SUPER_ADMIN';
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -129,6 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     testAuth,
+    isAdmin,
+    isSuperAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

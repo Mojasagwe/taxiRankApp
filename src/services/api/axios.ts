@@ -40,16 +40,21 @@ export const authService = {
       console.log('Registration response:', response.data); // Debug log
       
       // Store token after successful registration
-      if (response.data.success && response.data.data?.rider) {
+      if (response.data.success) {
         try {
-          // Store user data first
-          await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.rider));
+          // Get the user data from either rider or user field
+          const userData = response.data.data?.user || response.data.data?.rider;
           
-          // Then store token if it exists
-          if (response.data.data.token) {
-            await AsyncStorage.setItem('userToken', response.data.data.token);
-          } else {
-            console.warn('No token received in registration response');
+          if (userData) {
+            // Store user data first
+            await AsyncStorage.setItem('userData', JSON.stringify(userData));
+            
+            // Then store token if it exists
+            if (response.data.data?.token) {
+              await AsyncStorage.setItem('userToken', response.data.data.token);
+            } else {
+              console.warn('No token received in registration response');
+            }
           }
         } catch (storageError) {
           // Silently handle AsyncStorage errors
@@ -71,13 +76,16 @@ export const authService = {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
       console.log('Login response:', response.data);
       
-      if (response.data.success && response.data.data?.rider) {
+      if (response.data.success && (response.data.data?.rider || response.data.data?.user)) {
         try {
+          // Get the user data from either rider or user field
+          const userData = response.data.data?.user || response.data.data?.rider;
+          
           // Store user data first
-          await AsyncStorage.setItem('userData', JSON.stringify(response.data.data.rider));
+          await AsyncStorage.setItem('userData', JSON.stringify(userData));
           
           // Then store token if it exists
-          if (response.data.data.token) {
+          if (response.data.data?.token) {
             await AsyncStorage.setItem('userToken', response.data.data.token);
             console.log('Successfully stored token and user data');
           } else {
