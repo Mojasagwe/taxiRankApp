@@ -54,10 +54,11 @@
   "jest": {
     "preset": "react-native",
     "setupFilesAfterEnv": [
-      "<rootDir>/__mocks__/@react-native-async-storage/async-storage.js"
+      "<rootDir>/__mocks__/@react-native-async-storage/async-storage.js",
+      "<rootDir>/jest.setup.js"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!(@react-native|react-native|@react-navigation|react-native-vector-icons)/)"
+      "node_modules/(?!(@react-native|react-native|@react-navigation|react-native-vector-icons|react-native-dropdown-picker)/)"
     ],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js"
