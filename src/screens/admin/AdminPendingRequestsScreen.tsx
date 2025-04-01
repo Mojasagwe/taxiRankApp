@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { adminService } from '../../services/api/admin';
 import { AdminRegistrationRequest } from '../../types/admin';
 
 type AdminPendingRequestsScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
+  AdminStackParamList,
   'AdminPendingRequests'
 >;
 
@@ -65,7 +65,7 @@ const AdminPendingRequestsScreen: React.FC = () => {
       <Text style={styles.phone}>{item.phoneNumber}</Text>
       <Text style={styles.date}>Submitted: {formatDate(item.submittedAt)}</Text>
       <Text style={styles.ranksCount}>
-        Requested Ranks: {item.rankIds.length} {item.rankIds.length === 1 ? 'rank' : 'ranks'}
+        Requested Ranks: {item.rankCodes.length} {item.rankCodes.length === 1 ? 'rank' : 'ranks'}
       </Text>
     </TouchableOpacity>
   );

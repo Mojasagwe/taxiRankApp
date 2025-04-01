@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/AppNavigator';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { adminService } from '../../services/api/admin';
 import { AdminRegistrationRequest, Rank } from '../../types/admin';
 
-type AdminRequestDetailsRouteProp = RouteProp<RootStackParamList, 'AdminRequestDetails'>;
-type AdminRequestDetailsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AdminRequestDetails'>;
+type AdminRequestDetailsRouteProp = RouteProp<AdminStackParamList, 'AdminRequestDetails'>;
+type AdminRequestDetailsNavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminRequestDetails'>;
 
 const AdminRequestDetailsScreen: React.FC = () => {
   const navigation = useNavigation<AdminRequestDetailsNavigationProp>();
@@ -46,20 +46,20 @@ const AdminRequestDetailsScreen: React.FC = () => {
         
         // Fetch rank details for each rank ID
         const ranksData: Record<string, Rank> = {};
-        for (const rankId of response.data.rankIds) {
+        for (const rankCode of response.data.rankCodes) {
           // In a real app, you might want to batch these requests
           try {
             // We're assuming there's an API to get rank details by ID
             // If there isn't, you might need to get all available ranks and filter
             const rankResponse = await adminService.getAvailableRanks();
             if (rankResponse.success && rankResponse.data) {
-              const rank = rankResponse.data.find(r => r.id === rankId);
+              const rank = rankResponse.data.find(r => r.code === rankCode);
               if (rank) {
-                ranksData[rankId] = rank;
+                ranksData[rankCode] = rank;
               }
             }
           } catch (error) {
-            console.error(`Failed to fetch rank ${rankId}:`, error);
+            console.error(`Failed to fetch rank ${rankCode}:`, error);
           }
         }
         
@@ -213,17 +213,20 @@ const AdminRequestDetailsScreen: React.FC = () => {
         
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Requested Ranks</Text>
-          {request.rankIds.map(rankId => {
-            const rank = ranks[rankId];
+          {request.rankCodes.map(rankCode => {
+            const rank = ranks[rankCode];
             return (
-              <View key={rankId} style={styles.rankItem}>
+              <View key={rankCode} style={styles.rankItem}>
                 {rank ? (
                   <>
                     <Text style={styles.rankName}>{rank.name}</Text>
-                    <Text style={styles.rankAddress}>{rank.location.address}</Text>
+                    <Text style={styles.rankDescription}>{rank.description}</Text>
+                    <Text style={styles.rankAddress}>
+                      {rank.location?.address || rank.address}
+                    </Text>
                   </>
                 ) : (
-                  <Text style={styles.rankUnknown}>Rank ID: {rankId} (Details unavailable)</Text>
+                  <Text style={styles.rankUnknown}>Rank Code: {rankCode} (Details unavailable)</Text>
                 )}
               </View>
             );
@@ -417,6 +420,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
+  },
+  rankDescription: {
+    fontSize: 14,
+    color: '#666',
   },
   rankAddress: {
     fontSize: 14,
