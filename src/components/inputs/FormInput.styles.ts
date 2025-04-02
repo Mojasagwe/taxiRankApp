@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: '#222',
     marginBottom: 5,
   },
   input: {
@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
+    color: '#222',
   },
   inputFocused: {
     borderColor: '#e3ac34',
@@ -39,7 +39,8 @@ export const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
-    color: '#777',
+    color: '#555',
     marginTop: 4,
   }
-}); 
+})
+;

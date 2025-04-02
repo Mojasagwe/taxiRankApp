@@ -135,11 +135,6 @@ const RegisterScreen: React.FC = () => {
             title="Already have an account? Sign in"
             onPress={() => navigation.navigate('Login')}
           />
-          
-          <LinkButton
-            title="Back to start screen"
-            onPress={() => navigation.navigate('Landing')}
-          />
         </View>
       </ScrollView>
     </View>

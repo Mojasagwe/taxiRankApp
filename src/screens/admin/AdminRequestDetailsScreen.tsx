@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
-  TextInput,
   Modal
 } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -15,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { adminService } from '../../services/api/admin';
 import { AdminRegistrationRequest, Rank } from '../../types/admin';
+import FormInput from '../../components/inputs/FormInput';
 
 type AdminRequestDetailsRouteProp = RouteProp<AdminStackParamList, 'AdminRequestDetails'>;
 type AdminRequestDetailsNavigationProp = NativeStackNavigationProp<AdminStackParamList, 'AdminRequestDetails'>;
@@ -267,13 +267,13 @@ const AdminRequestDetailsScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Provide Rejection Reason</Text>
             
-            <TextInput
-              style={styles.reasonInput}
-              placeholder="Enter reason for rejection"
+            <FormInput
               value={rejectionReason}
               onChangeText={setRejectionReason}
+              placeholder="Enter reason for rejection"
               multiline={true}
               numberOfLines={3}
+              style={styles.reasonInput}
               autoFocus={true}
             />
             

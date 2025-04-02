@@ -11,12 +11,12 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
   },
   header: {
-    alignItems: 'center',
     paddingTop: 60, // Increased padding to ensure it's below dynamic island
     paddingBottom: 20,
     backgroundColor: '#fff',
     width: '100%',
     paddingHorizontal: 20,
+    position: 'relative',
   },
   title: {
     fontSize: 32,

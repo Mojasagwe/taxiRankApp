@@ -108,4 +108,21 @@ export interface RankAdminsResponse {
   message?: string;
   error?: string;
   data?: Admin[];
+}
+
+export interface DashboardStatsResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data?: {
+    managedRanksCount: number;
+    managedRanks: ManagedRank[];
+  };
+}
+
+export interface ManagedRank {
+  id: number;
+  name: string;
+  code: string;
+  city: string;
 } 

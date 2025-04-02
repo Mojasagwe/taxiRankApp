@@ -38,19 +38,21 @@ const dropdownStyles = StyleSheet.create({
     fontSize: 18
   },
   searchContainer: {
-    borderBottomColor: '#e3ac34'
+    borderBottomColor: 'transparent',
+    paddingHorizontal: 10,
+    paddingVertical: 5
   },
   searchInput: {
     borderColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 0,
     borderRadius: 5,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f9f9f9'
   },
   searchInputFocused: {
-    borderColor: '#e3ac34',
-    borderWidth: 1.2,
+    borderColor: 'transparent',
+    borderWidth: 0,
     borderRadius: 5,
-    backgroundColor: '#f5f5f5'
+    backgroundColor: '#f9f9f9'
   },
   listItemLabel: {
     color: '#333'
@@ -97,7 +99,6 @@ const AdminRegisterScreen: React.FC = () => {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [ranksLoading, setRanksLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch available ranks when component mounts
   useEffect(() => {
@@ -128,38 +129,35 @@ const AdminRegisterScreen: React.FC = () => {
   };
 
   const validateForm = () => {
-    // Reset error
-    setError(null);
-
     // Basic validation
     if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmPassword ||
         !designation || !justification || !professionalExperience) {
-      setError('All fields are required');
+      Alert.alert('Error', 'Please fill in all required fields');
       return false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
 
     // Password validation
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      Alert.alert('Error', 'Password must be at least 6 characters long');
       return false;
     }
 
     // Password matching
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      Alert.alert('Error', 'Passwords do not match');
       return false;
     }
 
     // Rank selection validation
-    if (selectedRankCodes.length === 0) {
-      setError('Please select at least one taxi rank');
+    if (selectedRankCodes.length === 0 && availableRanks.length > 0) {
+      Alert.alert('Error', 'Please select at least one taxi rank');
       return false;
     }
 
@@ -168,7 +166,7 @@ const AdminRegisterScreen: React.FC = () => {
     const invalidCodes = selectedRankCodes.filter(code => !availableRankCodes.includes(code));
     
     if (invalidCodes.length > 0) {
-      setError(`Invalid rank codes selected: ${invalidCodes.join(', ')}`);
+      Alert.alert('Error', `Invalid rank codes selected: ${invalidCodes.join(', ')}`);
       return false;
     }
 
@@ -202,10 +200,13 @@ const AdminRegisterScreen: React.FC = () => {
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
       } else {
-        setError(response.error || 'Registration failed');
+        Alert.alert('Error', response.error || 'Registration failed');
       }
     } catch (error: any) {
-      setError(error.message || 'Registration failed');
+      // Don't show error popup for AsyncStorage errors
+      if (!error.message?.includes('AsyncStorage') && !error.message?.includes('non-critical')) {
+        Alert.alert('Error', error.message || 'Registration failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -219,12 +220,6 @@ const AdminRegisterScreen: React.FC = () => {
       </View>
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
         <View style={styles.form}>
           <View style={styles.inputGroup}>
             <FormInput
@@ -337,7 +332,7 @@ const AdminRegisterScreen: React.FC = () => {
               </View>
             ) : (
               <>
-                <View style={styles.dropdownContainer}>
+                <View style={[styles.dropdownContainer, dropdownOpen && styles.dropdownContainerOpen]}>
                   <DropDownPicker
                     open={dropdownOpen}
                     value={selectedRankCodes}
@@ -353,9 +348,11 @@ const AdminRegisterScreen: React.FC = () => {
                     placeholder="Select taxi ranks"
                     style={[
                       styles.dropdown,
+                      !dropdownOpen && styles.dropdownShadow,
                       dropdownOpen && dropdownStyles.activeBorder
                     ]}
-                    dropDownContainerStyle={styles.dropdownList}
+                    containerStyle={{ marginTop: 0 }}
+                    dropDownContainerStyle={[styles.dropdownList, { marginTop: 0 }]}
                     listItemLabelStyle={dropdownStyles.listItemLabel}
                     selectedItemLabelStyle={dropdownStyles.selectedItemLabel}
                     selectedItemContainerStyle={dropdownStyles.selectedItemContainer}
@@ -387,20 +384,14 @@ const AdminRegisterScreen: React.FC = () => {
           </View>
 
           <PrimaryButton
-            title="SIGN UP"
+            title="Submit Registration"
             onPress={handleRegister}
-            disabled={isLoading}
             isLoading={isLoading}
           />
 
           <LinkButton
             title="Already have an account? Sign in"
             onPress={() => navigation.navigate('Login')}
-          />
-          
-          <LinkButton
-            title="Back to start screen"
-            onPress={() => navigation.navigate('Landing')}
           />
         </View>
       </ScrollView>

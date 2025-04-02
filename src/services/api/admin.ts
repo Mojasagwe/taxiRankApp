@@ -7,10 +7,30 @@ import {
   RequestDetailsResponse,
   ReviewDecision,
   ReviewResponse,
-  RankAdminsResponse
+  RankAdminsResponse,
+  DashboardStatsResponse
 } from '../../types/admin';
 
 export const adminService = {
+  // Get dashboard statistics
+  getDashboardStats: async (): Promise<DashboardStatsResponse> => {
+    try {
+      const response = await api.get<DashboardStatsResponse>('/dashboard/my-stats');
+      return response.data;
+    } catch (error: any) {
+      console.error('Get dashboard stats error:', error.response?.data || error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Failed to get dashboard stats',
+        message: 'Could not fetch dashboard statistics from server',
+        data: { 
+          managedRanksCount: 0,
+          managedRanks: []
+        }
+      };
+    }
+  },
+
   // 1. Check Available Ranks
   getAvailableRanks: async (): Promise<AvailableRanksResponse> => {
     try {
@@ -50,7 +70,7 @@ export const adminService = {
   // 3. Check Pending Requests
   getPendingRequests: async (): Promise<PendingRequestsResponse> => {
     try {
-      const response = await api.get<PendingRequestsResponse>('/admin/requests/PENDING');
+      const response = await api.get<PendingRequestsResponse>('/admin-registration/status/PENDING');
       return response.data;
     } catch (error: any) {
       console.error('Get pending requests error:', error.response?.data || error);

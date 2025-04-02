@@ -111,11 +111,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           title="Register as a Taxi Rank Admin"
           onPress={() => navigation.navigate('AdminRegister')}
         />
-        
-        <LinkButton
-          title="Back to start screen"
-          onPress={() => navigation.navigate('Landing')}
-        />
       </View>
     </View>
   );

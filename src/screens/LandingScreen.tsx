@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import RoleCard from '../components/cards/RoleCard';
-import LinkButton from '../components/buttons/LinkButton';
+import { LoginButton } from '../components/buttons';
 import { styles } from '../styles/landingScreen.styles';
 
 type LandingScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Landing'>;
@@ -26,6 +26,8 @@ const LandingScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <LoginButton onPress={() => navigation.navigate('Login')} />
+      
       <View style={styles.header}>
         <Text style={styles.title}>Welcome to Travy</Text>
         <Text style={styles.subtitle}>Choose how you want to use the app</Text>
@@ -46,11 +48,6 @@ const LandingScreen: React.FC = () => {
           onPress={navigateToAdmin}
         />
       </View>
-
-      <LinkButton
-        title="Already have an account? Login"
-        onPress={() => navigation.navigate('Login')}
-      />
     </SafeAreaView>
   );
 };

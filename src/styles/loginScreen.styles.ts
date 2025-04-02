@@ -8,6 +8,13 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#f9f9f9',
   },
+  header: {
+    position: 'absolute',
+    top: 50,
+    left: 15,
+    zIndex: 10,
+    alignSelf: 'flex-start',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',

@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
     padding: 15,
   },
   loginButtonText: {
-    color: '#0066cc',
+    color: '#f7bb07',
     fontSize: 16,
     fontWeight: '500',
   },

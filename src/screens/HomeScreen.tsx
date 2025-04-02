@@ -24,6 +24,12 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  const navigateToAdminDashboard = () => {
+    if (isAdmin()) {
+      navigation.navigate('AdminDashboard' as never);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome, {user?.firstName}</Text>
@@ -47,6 +53,13 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.infoText}>
             Managed Ranks: {user?.managedRanks?.length ? user.managedRanks.length : 0}
           </Text>
+          
+          <PrimaryButton 
+            title="Go to Admin Dashboard"
+            onPress={navigateToAdminDashboard}
+          />
+          
+          <View style={styles.spacer} />
           
           <PrimaryButton 
             title="View Pending Admin Requests"
@@ -117,6 +130,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#444',
     marginBottom: 10,
+  },
+  spacer: {
+    height: 10,
   },
 });
 
