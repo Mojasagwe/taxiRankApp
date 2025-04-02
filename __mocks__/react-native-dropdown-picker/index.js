@@ -18,15 +18,16 @@ const DropDownPicker = {
   TRANSLATIONS: {},
 };
 
-module.exports = jest.fn().mockImplementation(() => ({
+const mock = jest.fn(() => ({
   setOpen: jest.fn(),
   setItems: jest.fn(),
   setValue: jest.fn(),
   setSelectionState: jest.fn(),
-  ...DropDownPicker,
 }));
 
-// Export the constants as well
+// Add constants as properties of the function
 Object.keys(DropDownPicker).forEach(key => {
-  module.exports[key] = DropDownPicker[key];
-}); 
+  mock[key] = DropDownPicker[key];
+});
+
+module.exports = mock; 
