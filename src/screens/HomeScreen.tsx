@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { EnvironmentSwitcher } from '../components/common';
 
 const HomeScreen: React.FC = () => {
   const { user, logout, isAdmin, isSuperAdmin } = useAuth();
@@ -77,6 +78,9 @@ const HomeScreen: React.FC = () => {
         title="Logout"
         onPress={handleLogout}
       />
+      
+      {/* Environment switcher for development/testing */}
+      {__DEV__ && <EnvironmentSwitcher />}
     </View>
   );
 };
