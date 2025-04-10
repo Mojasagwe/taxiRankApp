@@ -5,16 +5,18 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminDashboardScreen from '../screens/admin/dashboard/AdminDashboardScreen';
 import AdminPendingRequestsScreen from '../screens/admin/AdminPendingRequestsScreen';
 import AdminRequestDetailsScreen from '../screens/admin/AdminRequestDetailsScreen';
+import AdminProfileScreen from '../screens/admin/profile/AdminProfileScreen';
+import ManageRankScreen from '../screens/admin/ManageRankScreen';
 // TODO: Add other admin screens when implemented
-// import ManageRankScreen from '../screens/admin/ManageRankScreen';
 // import UpdateRankDetailsScreen from '../screens/admin/UpdateRankDetailsScreen';
 
 export type AdminStackParamList = {
   AdminDashboard: undefined;
   AdminPendingRequests: undefined;
   AdminRequestDetails: { requestId: string };
-  ManageRank: { rankId: string };
+  ManageRank: { rankId: number; rankName: string };
   UpdateRankDetails: { rankId: string };
+  AdminProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -28,9 +30,10 @@ const AdminNavigator: React.FC = () => {
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
       <Stack.Screen name="AdminPendingRequests" component={AdminPendingRequestsScreen} />
       <Stack.Screen name="AdminRequestDetails" component={AdminRequestDetailsScreen} />
+      <Stack.Screen name="AdminProfile" component={AdminProfileScreen} />
+      <Stack.Screen name="ManageRank" component={ManageRankScreen} />
       {/* Add other admin screens here when implemented */}
       {/*
-      <Stack.Screen name="ManageRank" component={ManageRankScreen} />
       <Stack.Screen name="UpdateRankDetails" component={UpdateRankDetailsScreen} />
       */}
     </Stack.Navigator>

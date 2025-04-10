@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import PrimaryButton from '../components/buttons/PrimaryButton';
-import { EnvironmentSwitcher } from '../components/common';
+import { PlatformAwareView } from '../components/common';
 
 const HomeScreen: React.FC = () => {
   const { user, logout, isAdmin, isSuperAdmin } = useAuth();
@@ -32,11 +32,11 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <PlatformAwareView style={styles.container} padded containerStyle>
       <Text style={styles.title}>Welcome, {user?.firstName}</Text>
       
       {isSuperAdmin() ? (
-        <View style={styles.adminSection}>
+        <PlatformAwareView style={styles.adminSection} padded>
           <Text style={styles.subtitle}>Super Admin Dashboard</Text>
           <Text style={styles.infoText}>Role: {user?.role}</Text>
           
@@ -46,9 +46,9 @@ const HomeScreen: React.FC = () => {
           />
           
           {/* Additional super admin buttons could go here */}
-        </View>
+        </PlatformAwareView>
       ) : isAdmin() ? (
-        <View style={styles.adminSection}>
+        <PlatformAwareView style={styles.adminSection} padded>
           <Text style={styles.subtitle}>Admin Dashboard</Text>
           <Text style={styles.infoText}>Role: {user?.role}</Text>
           <Text style={styles.infoText}>
@@ -60,35 +60,30 @@ const HomeScreen: React.FC = () => {
             onPress={navigateToAdminDashboard}
           />
           
-          <View style={styles.spacer} />
+          <PlatformAwareView style={styles.spacer} />
           
           <PrimaryButton 
             title="View Pending Admin Requests"
             onPress={navigateToAdminRequests}
           />
-        </View>
+        </PlatformAwareView>
       ) : (
-        <View style={styles.commuterSection}>
+        <PlatformAwareView style={styles.commuterSection} padded>
           <Text style={styles.subtitle}>Commuter Dashboard</Text>
           {/* Commuter-specific UI elements would go here */}
-        </View>
+        </PlatformAwareView>
       )}
       
       <PrimaryButton 
         title="Logout"
         onPress={handleLogout}
       />
-      
-      {/* Environment switcher for development/testing */}
-      {__DEV__ && <EnvironmentSwitcher />}
-    </View>
+    </PlatformAwareView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f9f9f9',
@@ -113,7 +108,6 @@ const styles = StyleSheet.create({
   adminSection: {
     width: '100%',
     backgroundColor: '#fff8e6',
-    padding: 20,
     borderRadius: 10,
     marginBottom: 30,
     alignItems: 'center',
@@ -123,7 +117,6 @@ const styles = StyleSheet.create({
   commuterSection: {
     width: '100%',
     backgroundColor: '#fff8e6',
-    padding: 20,
     borderRadius: 10,
     marginBottom: 30,
     alignItems: 'center',

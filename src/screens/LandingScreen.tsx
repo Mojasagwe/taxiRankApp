@@ -9,6 +9,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
 import RoleCard from '../components/cards/RoleCard';
 import { LoginButton } from '../components/buttons';
+import { EnvironmentSwitcher } from '../components/common';
 import { styles } from '../styles/landingScreen.styles';
 
 type LandingScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Landing'>;
@@ -47,6 +48,11 @@ const LandingScreen: React.FC = () => {
           icon={require('../assets/adminOne.png')}
           onPress={navigateToAdmin}
         />
+      </View>
+
+      {/* Environment Switcher for development */}
+      <View style={styles.environmentSwitcherContainer}>
+        <EnvironmentSwitcher />
       </View>
     </SafeAreaView>
   );

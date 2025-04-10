@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
@@ -11,8 +11,9 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    zIndex: 900,
+    backgroundColor: 'rgba(255, 255, 255, 0.47)',
+    zIndex: Platform.OS === 'ios' ? 500 : undefined,
+    elevation: Platform.OS === 'android' ? 5 : undefined,
   },
   scrollContent: {
     flexGrow: 1,
@@ -84,11 +85,13 @@ export const styles = StyleSheet.create({
   },
   ranksSection: {
     marginTop: 10,
-    zIndex: 1000, // Important for dropdown
+    zIndex: Platform.OS === 'ios' ? 1000 : undefined, // Keep high z-index for iOS
+    position: 'relative', // Ensure position is relative to contain the absolute dropdown
   },
   dropdownContainer: {
     marginTop: 5,
-    zIndex: 1000, // Important for dropdown visibility
+    position: 'relative', // Necessary for absolute positioning of the dropdown
+    zIndex: Platform.OS === 'ios' ? 1000 : undefined, 
   },
   dropdownContainerOpen: {
     marginBottom: 0,
@@ -99,6 +102,7 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     borderWidth: 1,
     borderRadius: 10,
+    position: 'relative',
   },
   dropdownShadow: {
     shadowColor: '#000',
@@ -109,13 +113,19 @@ export const styles = StyleSheet.create({
   },
   dropdownList: {
     backgroundColor: '#fff',
-    borderColor: '#e3ac34',
+    borderColor: '#e3ac34', 
     borderWidth: 1.2,
     borderRadius: 10,
     marginTop: 0,
     borderTopWidth: 0,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
+    // Shadow for dropdown when it overlays other elements
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: Platform.OS === 'android' ? 8 : undefined,
   },
   noRanksText: {
     textAlign: 'center',

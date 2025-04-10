@@ -8,7 +8,9 @@ import {
   ReviewDecision,
   ReviewResponse,
   RankAdminsResponse,
-  DashboardStatsResponse
+  DashboardStatsResponse,
+  RankDetails,
+  TaxiTerminal
 } from '../../types/admin';
 
 export const adminService = {
@@ -108,6 +110,158 @@ export const adminService = {
     } catch (error: any) {
       console.error('Get rank admins error:', error.response?.data || error);
       throw error.response?.data || { success: false, error: 'Failed to get rank admins' };
+    }
+  },
+
+  // Get Rank Details
+  getRankDetails: async (rankId: number): Promise<{ 
+    success: boolean; 
+    data?: RankDetails;
+    error?: string; 
+    message?: string;
+  }> => {
+    try {
+      const response = await api.get<{ 
+        success: boolean; 
+        data?: RankDetails;
+        error?: string; 
+        message?: string;
+      }>(`/ranks/${rankId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get rank details error:', error.response?.data || error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || error.message || 'Failed to get rank details',
+        message: 'Could not fetch rank details from server'
+      };
+    }
+  },
+
+  // Update Rank Details
+  updateRankDetails: async (rankId: number, rankData: Partial<RankDetails>): Promise<{
+    success: boolean;
+    data?: RankDetails;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.put<{
+        success: boolean;
+        data?: RankDetails;
+        error?: string;
+        message?: string;
+      }>(`/ranks/${rankId}`, rankData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Update rank details error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to update rank details',
+        message: 'Could not update rank details on server'
+      };
+    }
+  },
+
+  // Add Terminal to Rank
+  addTerminal: async (rankId: number, terminal: Partial<TaxiTerminal>): Promise<{
+    success: boolean;
+    data?: TaxiTerminal;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.post<{
+        success: boolean;
+        data?: TaxiTerminal;
+        error?: string;
+        message?: string;
+      }>(`/ranks/${rankId}/terminals`, terminal);
+      return response.data;
+    } catch (error: any) {
+      console.error('Add terminal error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to add terminal',
+        message: 'Could not add terminal to rank'
+      };
+    }
+  },
+
+  // Update Terminal
+  updateTerminal: async (rankId: number, terminalId: number, terminal: Partial<TaxiTerminal>): Promise<{
+    success: boolean;
+    data?: TaxiTerminal;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.put<{
+        success: boolean;
+        data?: TaxiTerminal;
+        error?: string;
+        message?: string;
+      }>(`/ranks/${rankId}/terminals/${terminalId}`, terminal);
+      return response.data;
+    } catch (error: any) {
+      console.error('Update terminal error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to update terminal',
+        message: 'Could not update terminal'
+      };
+    }
+  },
+
+  // Delete Terminal
+  deleteTerminal: async (rankId: number, terminalId: number): Promise<{
+    success: boolean;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.delete<{
+        success: boolean;
+        error?: string;
+        message?: string;
+      }>(`/ranks/${rankId}/terminals/${terminalId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Delete terminal error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to delete terminal',
+        message: 'Could not delete terminal'
+      };
+    }
+  },
+
+  // Upload Rank Image
+  uploadRankImage: async (rankId: number, imageFile: FormData): Promise<{
+    success: boolean;
+    data?: { imageUrl: string };
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.post<{
+        success: boolean;
+        data?: { imageUrl: string };
+        error?: string;
+        message?: string;
+      }>(`/ranks/${rankId}/image`, imageFile, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Upload rank image error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to upload rank image',
+        message: 'Could not upload rank image'
+      };
     }
   }
 }; 

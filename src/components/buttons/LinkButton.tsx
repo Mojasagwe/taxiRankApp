@@ -10,12 +10,14 @@ interface LinkButtonProps extends TouchableOpacityProps {
   title: string;
   onPress: () => void;
   color?: string;
+  disabled?: boolean;
 }
 
 const LinkButton: React.FC<LinkButtonProps> = ({ 
   title, 
   onPress, 
   color = '#0066cc',
+  disabled = false,
   style,
   ...rest 
 }) => {
@@ -23,9 +25,17 @@ const LinkButton: React.FC<LinkButtonProps> = ({
     <TouchableOpacity
       style={[styles.button, style]}
       onPress={onPress}
+      disabled={disabled}
       {...rest}
     >
-      <Text style={[styles.buttonText, { color }]}>{title}</Text>
+      <Text 
+        style={[
+          styles.buttonText, 
+          { color: disabled ? '#999999' : color }
+        ]}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 };

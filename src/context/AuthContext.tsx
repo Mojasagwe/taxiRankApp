@@ -126,6 +126,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData: Partial<User>): Promise<boolean> => {
+    try {
+      setError(null);
+      // In a real implementation, this would call an API endpoint
+      console.log('Updating profile with data:', profileData);
+      
+      // Mock successful API call
+      // Update the user state with the new data
+      if (user) {
+        const updatedUser = { ...user, ...profileData };
+        setUser(updatedUser);
+        
+        // Update the stored user data
+        await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      setError(error.message || 'Profile update failed');
+      return false;
+    }
+  };
+
   const isAdmin = (): boolean => {
     return user?.role === 'ADMIN';
   };
@@ -144,6 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     testAuth,
     isAdmin,
     isSuperAdmin,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

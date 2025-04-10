@@ -81,4 +81,9 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  environmentSwitcherContainer: {
+    position: 'absolute',
+    bottom: 20,
+    width: '100%',
+  },
 }); 

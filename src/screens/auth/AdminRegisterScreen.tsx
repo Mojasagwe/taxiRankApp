@@ -5,7 +5,9 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  StyleSheet
+  StyleSheet,
+  Platform,
+  Pressable
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -80,10 +82,6 @@ const AdminRegisterScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [designation, setDesignation] = useState('');
-  const [justification, setJustification] = useState('');
-  const [professionalExperience, setProfessionalExperience] = useState('');
-  const [adminNotes, setAdminNotes] = useState('');
   
   // Focus state for search
   const [searchFocused, setSearchFocused] = useState(false);
@@ -130,8 +128,7 @@ const AdminRegisterScreen: React.FC = () => {
 
   const validateForm = () => {
     // Basic validation
-    if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmPassword ||
-        !designation || !justification || !professionalExperience) {
+    if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all required fields');
       return false;
     }
@@ -187,10 +184,9 @@ const AdminRegisterScreen: React.FC = () => {
         password,
         preferredPaymentMethod: 'CASH',
         selectedRankCodes: selectedRankCodes,
-        designation,
-        justification,
-        professionalExperience,
-        adminNotes: adminNotes || ''
+        justification: 'N/A', // Provide a default value
+        designation: 'Rank Administrator', // Provide a default value
+        professionalExperience: 'N/A' // Provide a default value
       });
 
       if (response.success) {
@@ -212,6 +208,13 @@ const AdminRegisterScreen: React.FC = () => {
     }
   };
 
+  // Handle backdrop press to close dropdown
+  const handleBackdropPress = () => {
+    if (dropdownOpen) {
+      setDropdownOpen(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={styles.header}>
@@ -219,107 +222,74 @@ const AdminRegisterScreen: React.FC = () => {
         <Text style={styles.subtitle}>Sign up as a Taxi Rank Administrator</Text>
       </View>
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 80 }
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Backdrop overlay when dropdown is open */}
+        {dropdownOpen && (
+          <Pressable 
+            style={styles.dropdownBackdrop}
+            onPress={handleBackdropPress}
+          />
+        )}
+        
         <View style={styles.form}>
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { opacity: dropdownOpen ? 0.835 : 1 }]}>
             <FormInput
               value={firstName}
               onChangeText={setFirstName}
               placeholder="First Name"
               autoCapitalize="words"
+              editable={!dropdownOpen}
             />
           </View>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { opacity: dropdownOpen ? 0.835 : 1 }]}>
             <FormInput
               value={lastName}
               onChangeText={setLastName}
               placeholder="Last Name"
               autoCapitalize="words"
+              editable={!dropdownOpen}
             />
           </View>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { opacity: dropdownOpen ? 0.835 : 1 }]}>
             <FormInput
               value={email}
               onChangeText={setEmail}
               placeholder="Email"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!dropdownOpen}
             />
           </View>
 
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, { opacity: dropdownOpen ? 0.835 : 1 }]}>
             <FormInput
               value={phoneNumber}
               onChangeText={setPhoneNumber}
               placeholder="Phone Number"
               keyboardType="phone-pad"
+              editable={!dropdownOpen}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              secureTextEntry={true}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm Password"
-              secureTextEntry={true}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={designation}
-              onChangeText={setDesignation}
-              placeholder="Designation (e.g. Rank Manager)"
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={justification}
-              onChangeText={setJustification}
-              placeholder="Justification"
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={professionalExperience}
-              onChangeText={setProfessionalExperience}
-              placeholder="Professional Experience"
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <FormInput
-              value={adminNotes}
-              onChangeText={setAdminNotes}
-              placeholder="Additional Notes (Optional)"
-              multiline
-              numberOfLines={2}
-            />
-          </View>
-
-          <View style={[styles.inputGroup, styles.ranksSection]}>
+          <View style={[
+            styles.inputGroup, 
+            styles.ranksSection, 
+            { 
+              zIndex: Platform.OS === 'ios' ? 9999 : undefined, 
+              elevation: Platform.OS === 'android' ? 999 : undefined,
+              marginTop: 20,
+              marginBottom: 15,
+              opacity: 1 // Always maintain full opacity for dropdown
+            }
+          ]}>
             {ranksLoading ? (
               <ActivityIndicator size="large" color="#0066cc" />
             ) : availableRanks.length === 0 ? (
@@ -332,7 +302,11 @@ const AdminRegisterScreen: React.FC = () => {
               </View>
             ) : (
               <>
-                <View style={[styles.dropdownContainer, dropdownOpen && styles.dropdownContainerOpen]}>
+                <View style={[
+                  styles.dropdownContainer, 
+                  dropdownOpen && styles.dropdownContainerOpen,
+                  { position: 'relative' }  // Ensure the dropdown container has position relative
+                ]}>
                   <DropDownPicker
                     open={dropdownOpen}
                     value={selectedRankCodes}
@@ -349,10 +323,26 @@ const AdminRegisterScreen: React.FC = () => {
                     style={[
                       styles.dropdown,
                       !dropdownOpen && styles.dropdownShadow,
-                      dropdownOpen && dropdownStyles.activeBorder
+                      dropdownOpen && dropdownStyles.activeBorder,
                     ]}
-                    containerStyle={{ marginTop: 0 }}
-                    dropDownContainerStyle={[styles.dropdownList, { marginTop: 0 }]}
+                    zIndex={Platform.OS === 'ios' ? 9999 : undefined}
+                    zIndexInverse={Platform.OS === 'ios' ? 1000 : undefined}
+                    containerStyle={{ 
+                      marginTop: 0,
+                      position: 'relative' 
+                    }}
+                    dropDownContainerStyle={[
+                      styles.dropdownList, 
+                      { 
+                        marginTop: 0,
+                        borderColor: '#e3ac34',
+                        maxHeight: 150,
+                        position: 'absolute',  // Position the dropdown absolutely
+                        top: '100%',           // Position it right below the trigger
+                        left: 0,
+                        right: 0
+                      }
+                    ]}
                     listItemLabelStyle={dropdownStyles.listItemLabel}
                     selectedItemLabelStyle={dropdownStyles.selectedItemLabel}
                     selectedItemContainerStyle={dropdownStyles.selectedItemContainer}
@@ -383,16 +373,44 @@ const AdminRegisterScreen: React.FC = () => {
             )}
           </View>
 
-          <PrimaryButton
-            title="Submit Registration"
-            onPress={handleRegister}
-            isLoading={isLoading}
-          />
+          <View style={[styles.inputGroup, { zIndex: 1, opacity: dropdownOpen ? 0.835 : 1 }]}>
+            <FormInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry={true}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!dropdownOpen}
+            />
+          </View>
 
-          <LinkButton
-            title="Already have an account? Sign in"
-            onPress={() => navigation.navigate('Login')}
-          />
+          <View style={[styles.inputGroup, { zIndex: 1, opacity: dropdownOpen ? 0.835 : 1 }]}>
+            <FormInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm Password"
+              secureTextEntry={true}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!dropdownOpen}
+            />
+          </View>
+
+          <View style={{ opacity: dropdownOpen ? 0.835 : 1 }}>
+            <PrimaryButton
+              title="Submit Registration"
+              onPress={handleRegister}
+              isLoading={isLoading}
+              disabled={dropdownOpen}
+            />
+
+            <LinkButton
+              title="Already have an account? Sign in"
+              onPress={() => navigation.navigate('Login')}
+              disabled={dropdownOpen}
+            />
+          </View>
         </View>
       </ScrollView>
     </View>

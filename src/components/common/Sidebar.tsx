@@ -6,6 +6,7 @@ import {
   Animated,
   Dimensions
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { styles } from './Sidebar.styles';
 
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   const { user, logout } = useAuth();
+  const navigation = useNavigation();
   const screenWidth = Dimensions.get('window').width;
   
   // Use useMemo to avoid recreating the Animated.Value on every render
@@ -43,8 +45,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isVisible, onClose }) => {
   };
 
   const handleProfilePress = () => {
-    // To be implemented
-    console.log('Navigate to admin profile');
+    // Navigate to AdminProfile screen
+    navigation.navigate('AdminProfile' as never);
     onClose();
   };
 

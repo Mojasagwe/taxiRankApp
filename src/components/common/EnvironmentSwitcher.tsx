@@ -57,35 +57,42 @@ const EnvironmentSwitcher = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f0f0f0',
+    padding: 12,
+    backgroundColor: 'rgba(240, 240, 240, 0.85)',
     borderRadius: 8,
-    margin: 16,
+    margin: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   label: {
     marginHorizontal: 8,
-    fontSize: 14,
+    fontSize: 12,
   },
   status: {
     textAlign: 'center',
-    marginVertical: 8,
+    marginVertical: 4,
+    fontSize: 12,
   },
   statusValue: {
     fontWeight: 'bold',
   },
   baseUrl: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
     textAlign: 'center',
   }

@@ -9,6 +9,7 @@ import {
   FlatList
 } from 'react-native';
 import { ManagedRank } from '../../types/admin';
+import { getListItemPadding, getScreenDimensions } from '../../utils/platformUtils';
 
 interface ManagedRankListProps {
   visible: boolean;
@@ -68,7 +69,7 @@ const ManagedRankList: React.FC<ManagedRankListProps> = ({
   );
 };
 
-const { width, height } = Dimensions.get('window');
+const { width, height, modalWidth } = getScreenDimensions();
 
 const styles = StyleSheet.create({
   modalBackground: {
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: width * 0.85,
+    width: modalWidth,
     maxHeight: height * 0.7,
     backgroundColor: 'white',
     borderRadius: 12,
@@ -122,8 +123,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    ...getListItemPadding(),
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },

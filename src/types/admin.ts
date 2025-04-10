@@ -23,6 +23,26 @@ export interface Rank {
     longitude: number;
     address: string;
   };
+  terminals?: TaxiTerminal[];
+}
+
+export interface TaxiTerminal {
+  id: number;
+  name: string;     // Destination name (e.g., "Pretoria", "Bloemfontein")
+  fare: number;     // Fare amount in Rands
+  travelTime: string; // Estimated travel time (e.g., "2 hours")
+  distance: string;  // Distance to destination (e.g., "120km")
+  departureSchedule?: string; // When taxis leave (e.g., "Every hour from 6AM-6PM")
+  isActive: boolean; // Whether this terminal is active
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RankDetails extends Rank {
+  terminals: TaxiTerminal[];
+  imageUrl?: string;
+  openTime: string;
+  closeTime: string;
 }
 
 export interface AdminRegRequest {

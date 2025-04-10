@@ -1,16 +1,22 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { getContainerPadding } from '../../../utils/platformUtils';
+
+const { height } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+    ...(Platform.OS === 'ios' ? { paddingLeft: 0, paddingRight: 0 } : {}),
   },
   content: {
     flex: 1,
-    padding: 15,
+    ...(Platform.OS === 'ios' ? {} : getContainerPadding()),
+    paddingLeft: Platform.OS === 'ios' ? 0 : undefined,
+    paddingRight: Platform.OS === 'ios' ? 0 : undefined,
   },
   contentContainer: {
-    paddingTop: 70,
+    paddingTop: Platform.OS === 'ios' ? 70 : 60,
     paddingBottom: 20,
   },
   header: {
@@ -27,10 +33,12 @@ export const styles = StyleSheet.create({
     color: '#666',
   },
   cardsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginHorizontal: -5,
+    flexDirection: 'column',
+    width: '100%',
+    alignItems: 'flex-start',
+    marginTop: Platform.OS === 'ios' ? height * 0.35 : height * 0.10,
+    paddingLeft: Platform.OS === 'ios' ? 0 : 15,
+    paddingRight: 0,
   },
 }); 
  

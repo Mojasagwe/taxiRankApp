@@ -53,4 +53,5 @@ export interface AuthContextType {
   testAuth: () => Promise<boolean>;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
+  updateProfile: (profileData: Partial<User>) => Promise<boolean>;
 } 
