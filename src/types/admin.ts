@@ -33,6 +33,7 @@ export interface TaxiTerminal {
   travelTime: string; // Estimated travel time (e.g., "2 hours")
   distance: string;  // Distance to destination (e.g., "120km")
   departureSchedule?: string; // When taxis leave (e.g., "Every hour from 6AM-6PM")
+  operatingDays?: string[];  // Days of the week when the route operates
   isActive: boolean; // Whether this terminal is active
   createdAt: string;
   updatedAt: string;
@@ -145,4 +146,18 @@ export interface ManagedRank {
   name: string;
   code: string;
   city: string;
+  address?: string;
+  capacity?: number;
+  contactEmail?: string;
+  contactPhone?: string;
+  createdAt?: string;
+  description?: string;
+  isActive?: boolean;
+  latitude?: number;
+  longitude?: number;
+  operatingHours?: string;
+  province?: string;
+  rankAdmins?: any[];
+  updatedAt?: string;
+  imageUrl?: string;
 } 

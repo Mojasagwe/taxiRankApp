@@ -138,6 +138,29 @@ export const adminService = {
     }
   },
 
+  // Self-unassign from a rank
+  selfUnassignFromRank: async (rankId: number): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+  }> => {
+    try {
+      const response = await api.delete<{
+        success: boolean;
+        message?: string;
+        error?: string;
+      }>(`/rank-admins/self-unassign/${rankId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Self-unassign error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to unassign from rank',
+        message: 'Could not unassign from the rank'
+      };
+    }
+  },
+
   // Update Rank Details
   updateRankDetails: async (rankId: number, rankData: Partial<RankDetails>): Promise<{
     success: boolean;
@@ -176,7 +199,7 @@ export const adminService = {
         data?: TaxiTerminal;
         error?: string;
         message?: string;
-      }>(`/ranks/${rankId}/terminals`, terminal);
+      }>(`/taxi-ranks/${rankId}/terminals`, terminal);
       return response.data;
     } catch (error: any) {
       console.error('Add terminal error:', error.response?.data || error);
@@ -201,7 +224,7 @@ export const adminService = {
         data?: TaxiTerminal;
         error?: string;
         message?: string;
-      }>(`/ranks/${rankId}/terminals/${terminalId}`, terminal);
+      }>(`/taxi-ranks/${rankId}/terminals/${terminalId}`, terminal);
       return response.data;
     } catch (error: any) {
       console.error('Update terminal error:', error.response?.data || error);
@@ -224,7 +247,7 @@ export const adminService = {
         success: boolean;
         error?: string;
         message?: string;
-      }>(`/ranks/${rankId}/terminals/${terminalId}`);
+      }>(`/taxi-ranks/${rankId}/terminals/${terminalId}`);
       return response.data;
     } catch (error: any) {
       console.error('Delete terminal error:', error.response?.data || error);
@@ -232,6 +255,113 @@ export const adminService = {
         success: false,
         error: error.response?.data?.error || error.message || 'Failed to delete terminal',
         message: 'Could not delete terminal'
+      };
+    }
+  },
+
+  // Get all terminals for a rank
+  getTerminals: async (rankId: number, onlyActive?: boolean): Promise<{
+    success: boolean;
+    data?: TaxiTerminal[];
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const params = onlyActive !== undefined ? { onlyActive } : {};
+      const response = await api.get<{
+        success: boolean;
+        data?: TaxiTerminal[];
+        error?: string;
+        message?: string;
+      }>(`/taxi-ranks/${rankId}/terminals`, { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('Get terminals error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get terminals',
+        message: 'Could not fetch terminals'
+      };
+    }
+  },
+
+  // Get terminal details
+  getTerminalDetails: async (rankId: number, terminalId: number): Promise<{
+    success: boolean;
+    data?: TaxiTerminal;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.get<{
+        success: boolean;
+        data?: TaxiTerminal;
+        error?: string;
+        message?: string;
+      }>(`/taxi-ranks/${rankId}/terminals/${terminalId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get terminal details error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get terminal details',
+        message: 'Could not fetch terminal details'
+      };
+    }
+  },
+
+  // Update terminal status (activate/deactivate)
+  updateTerminalStatus: async (rankId: number, terminalId: number, isActive: boolean): Promise<{
+    success: boolean;
+    data?: TaxiTerminal;
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.patch<{
+        success: boolean;
+        data?: TaxiTerminal;
+        error?: string;
+        message?: string;
+      }>(`/taxi-ranks/${rankId}/terminals/${terminalId}/status`, { isActive });
+      return response.data;
+    } catch (error: any) {
+      console.error('Update terminal status error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to update terminal status',
+        message: 'Could not update terminal status'
+      };
+    }
+  },
+
+  // Get terminal statistics
+  getTerminalStats: async (rankId: number): Promise<{
+    success: boolean;
+    data?: {
+      totalCount: number;
+      activeCount: number;
+    };
+    error?: string;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.get<{
+        success: boolean;
+        data?: {
+          totalCount: number;
+          activeCount: number;
+        };
+        error?: string;
+        message?: string;
+      }>(`/taxi-ranks/${rankId}/terminals/stats`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get terminal stats error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get terminal statistics',
+        message: 'Could not fetch terminal statistics'
       };
     }
   },

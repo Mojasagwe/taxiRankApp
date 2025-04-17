@@ -5,7 +5,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Alert,
   ActivityIndicator
@@ -18,8 +17,8 @@ import TerminalEditorModal from '../../components/modals/TerminalEditorModal';
 import { PrimaryButton } from '../../components/buttons';
 import { TerminalCard } from '../../components/cards';
 import { RankDetails, TaxiTerminal } from '../../types/admin';
-// Import will be used when API integration is implemented
-// import { adminService } from '../../services/api/admin';
+// Import the admin service for API integration
+import { adminService } from '../../services/api/admin';
 
 type ManageRankScreenRouteProp = RouteProp<AdminStackParamList, 'ManageRank'>;
 type ManageRankScreenNavigationProp = NativeStackNavigationProp<AdminStackParamList>;
@@ -27,7 +26,7 @@ type ManageRankScreenNavigationProp = NativeStackNavigationProp<AdminStackParamL
 const ManageRankScreen: React.FC = () => {
   const route = useRoute<ManageRankScreenRouteProp>();
   const navigation = useNavigation<ManageRankScreenNavigationProp>();
-  const { rankId, rankName } = route.params;
+  const { rankId } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,83 +52,108 @@ const ManageRankScreen: React.FC = () => {
   const [terminals, setTerminals] = useState<TaxiTerminal[]>([]);
 
   const fetchRankDetails = useCallback(async () => {
+    // Helper function to fetch terminals
+    const fetchTerminals = async () => {
+      try {
+        const terminalsResponse = await adminService.getTerminals(rankId);
+        if (terminalsResponse.success && terminalsResponse.data) {
+          setTerminals(terminalsResponse.data);
+          return true;
+        } else {
+          console.error('Failed to fetch terminals:', terminalsResponse.error);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error fetching terminals:', error);
+        return false;
+      }
+    };
+
     try {
       setIsLoading(true);
-      // This would be an API call in a real app
-      // For now, we'll mock the data
-      const mockRankDetails: RankDetails = {
-        id: rankId,
-        name: rankName,
-        code: `RANK-${rankId}`,
-        description: "Main taxi rank serving the Johannesburg area.",
-        address: "123 Main Road",
-        city: "Johannesburg",
-        province: "Gauteng",
-        latitude: -26.2041,
-        longitude: 28.0473,
-        contactPhone: "+27 11 123 4567",
-        contactEmail: "info@joburgtaxirank.co.za",
-        operatingHours: "6AM - 7PM",
-        openTime: "06:00",
-        closeTime: "19:00",
-        capacity: 120,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        terminals: [
-          {
-            id: 1,
-            name: "Pretoria",
-            fare: 150,
-            travelTime: "1 hour 30 minutes",
-            distance: "58km",
-            departureSchedule: "Every 30 minutes from 6AM-7PM",
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: 2,
-            name: "Bloemfontein",
-            fare: 450,
-            travelTime: "4 hours",
-            distance: "398km",
-            departureSchedule: "Twice daily at 7AM and 12PM",
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ],
-        rankAdmins: [],
-        imageUrl: "https://via.placeholder.com/300"
-      };
-
-      // In a real app, this would come from an API
-      // const response = await adminService.getRankDetails(rankId);
-      // const rankDetails = response.data;
       
-      setRankDetails(mockRankDetails);
+      // First, fetch dashboard stats to get the list of ranks
+      const dashboardResponse = await adminService.getDashboardStats();
+      
+      if (!dashboardResponse.success || !dashboardResponse.data) {
+        throw new Error(dashboardResponse.error || 'Failed to fetch dashboard stats');
+      }
+      
+      // Find the specific rank from the managed ranks array
+      const rank = dashboardResponse.data.managedRanks.find(r => r.id === rankId);
+      
+      if (!rank) {
+        throw new Error('Rank not found in managed ranks');
+      }
+      
+      // Extract operating hours into open and close time
+      let openTime = '06:00';
+      let closeTime = '18:00';
+      
+      if (rank.operatingHours) {
+        const times = rank.operatingHours.split('-');
+        if (times.length === 2) {
+          openTime = times[0].trim();
+          closeTime = times[1].trim();
+        }
+      }
+      
+      // Create a RankDetails object from the rank data
+      const rankDetails: RankDetails = {
+        id: rank.id,
+        name: rank.name,
+        code: rank.code || `RANK-${rank.id}`,
+        description: rank.description || '',
+        address: rank.address || '',
+        city: rank.city || '',
+        province: rank.province || '',
+        latitude: rank.latitude || 0,
+        longitude: rank.longitude || 0,
+        contactPhone: rank.contactPhone || '',
+        contactEmail: rank.contactEmail || '',
+        operatingHours: rank.operatingHours || '',
+        openTime: openTime,
+        closeTime: closeTime,
+        capacity: rank.capacity || 0,
+        isActive: rank.isActive !== undefined ? rank.isActive : true,
+        createdAt: rank.createdAt || new Date().toISOString(),
+        updatedAt: rank.updatedAt || new Date().toISOString(),
+        terminals: [], // Will be populated below
+        rankAdmins: rank.rankAdmins || [],
+        imageUrl: rank.imageUrl
+      };
+      
+      // Set the rank details
+      setRankDetails(rankDetails);
       
       // Set the form state
-      setName(mockRankDetails.name);
-      setDescription(mockRankDetails.description);
-      setAddress(mockRankDetails.address);
-      setCity(mockRankDetails.city);
-      setProvince(mockRankDetails.province);
-      setLatitude(mockRankDetails.latitude.toString());
-      setLongitude(mockRankDetails.longitude.toString());
-      setContactPhone(mockRankDetails.contactPhone);
-      setContactEmail(mockRankDetails.contactEmail);
-      setOpenTime(mockRankDetails.openTime);
-      setCloseTime(mockRankDetails.closeTime);
-      setTerminals(mockRankDetails.terminals);
+      setName(rankDetails.name);
+      setDescription(rankDetails.description);
+      setAddress(rankDetails.address);
+      setCity(rankDetails.city);
+      setProvince(rankDetails.province);
+      setLatitude(rankDetails.latitude.toString());
+      setLongitude(rankDetails.longitude.toString());
+      setContactPhone(rankDetails.contactPhone);
+      setContactEmail(rankDetails.contactEmail);
+      setOpenTime(rankDetails.openTime);
+      setCloseTime(rankDetails.closeTime);
+      
+      // Try to fetch terminals, but continue even if it fails
+      const terminalsSuccess = await fetchTerminals();
+      if (!terminalsSuccess) {
+        // Use empty terminals array if fetching fails
+        setTerminals([]);
+        console.warn('Using empty terminals list due to fetch failure');
+      }
+      
     } catch (error) {
       console.error('Failed to fetch rank details:', error);
       Alert.alert('Error', 'Failed to fetch rank details');
     } finally {
       setIsLoading(false);
     }
-  }, [rankId, rankName]);
+  }, [rankId]);
 
   useEffect(() => {
     fetchRankDetails();
@@ -196,36 +220,51 @@ const ManageRankScreen: React.FC = () => {
         contactEmail,
         openTime,
         closeTime,
-        terminals
+        terminals,
+        operatingHours: `${openTime}-${closeTime}`
       };
       
-      // This would be an API call in a real app
-      // await adminService.updateRankDetails(rankId, updatedRankDetails);
+      // Call the API to update rank details
+      const updateResult = await adminService.updateRankDetails(rankId, {
+        name: updatedRankDetails.name,
+        description: updatedRankDetails.description,
+        address: updatedRankDetails.address,
+        city: updatedRankDetails.city,
+        province: updatedRankDetails.province,
+        latitude: updatedRankDetails.latitude,
+        longitude: updatedRankDetails.longitude,
+        contactPhone: updatedRankDetails.contactPhone,
+        contactEmail: updatedRankDetails.contactEmail,
+        operatingHours: updatedRankDetails.operatingHours,
+        capacity: updatedRankDetails.capacity,
+        isActive: updatedRankDetails.isActive
+      });
       
-      // Update the state
-      setRankDetails(updatedRankDetails);
+      if (!updateResult.success) {
+        throw new Error(updateResult.error || 'Failed to update rank details');
+      }
       
-      Alert.alert('Success', 'Rank details updated successfully');
+      // Update local state with the response data
+      if (updateResult.data) {
+        // For terminals, keep the current terminals state as it's managed separately
+        setRankDetails({
+          ...updateResult.data,
+          terminals
+        });
+      }
+      
       setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update rank details:', error);
-      Alert.alert('Error', 'Failed to update rank details');
+      Alert.alert('Success', 'Rank details updated successfully');
+    } catch (error: any) {
+      console.error('Save rank details error:', error);
+      Alert.alert('Error', error.message || 'Failed to save rank details');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleAddTerminal = () => {
-    setSelectedTerminal({
-      id: Date.now(), // Temporary ID
-      name: '',
-      fare: 0,
-      travelTime: '',
-      distance: '',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    });
+    setSelectedTerminal(null);
     setShowTerminalModal(true);
   };
 
@@ -234,58 +273,125 @@ const ManageRankScreen: React.FC = () => {
     setShowTerminalModal(true);
   };
 
-  const handleDeleteTerminal = (terminalId: number) => {
-    Alert.alert(
-      'Delete Terminal',
-      'Are you sure you want to delete this terminal?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Delete',
-          onPress: () => {
-            const updatedTerminals = terminals.filter(t => t.id !== terminalId);
-            setTerminals(updatedTerminals);
-            if (rankDetails) {
-              setRankDetails({
-                ...rankDetails,
-                terminals: updatedTerminals
-              });
-            }
+  const handleDeleteTerminal = async (terminalId: number) => {
+    try {
+      // Confirm deletion
+      Alert.alert(
+        'Confirm Deletion',
+        'Are you sure you want to delete this terminal?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
           },
-          style: 'destructive'
-        }
-      ]
-    );
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              setIsLoading(true);
+              
+              const deleteResult = await adminService.deleteTerminal(rankId, terminalId);
+              
+              if (!deleteResult.success) {
+                throw new Error(deleteResult.error || 'Failed to delete terminal');
+              }
+              
+              // Remove the terminal from the list
+              setTerminals(prevTerminals => 
+                prevTerminals.filter(t => t.id !== terminalId)
+              );
+              
+              Alert.alert('Success', 'Terminal deleted successfully');
+              setIsLoading(false);
+            }
+          }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Delete terminal error:', error);
+      Alert.alert('Error', error.message || 'Failed to delete terminal');
+      setIsLoading(false);
+    }
   };
 
-  const handleTerminalSave = (terminal: TaxiTerminal) => {
-    const exists = terminals.some(t => t.id === terminal.id);
-    let updatedTerminals;
-    
-    if (exists) {
-      updatedTerminals = terminals.map(t => 
-        t.id === terminal.id ? terminal : t
+  const handleTerminalSave = async (terminal: TaxiTerminal) => {
+    try {
+      setIsLoading(true);
+      
+      if (selectedTerminal) {
+        // Update existing terminal
+        const updateResult = await adminService.updateTerminal(rankId, terminal.id, terminal);
+        
+        if (!updateResult.success) {
+          throw new Error(updateResult.error || 'Failed to update terminal');
+        }
+        
+        // Update the terminals list
+        setTerminals(prevTerminals => 
+          prevTerminals.map(t => t.id === terminal.id ? (updateResult.data || terminal) : t)
+        );
+        
+        Alert.alert('Success', 'Terminal updated successfully');
+      } else {
+        // Create new terminal
+        const createResult = await adminService.addTerminal(rankId, terminal);
+        
+        if (!createResult.success) {
+          throw new Error(createResult.error || 'Failed to add terminal');
+        }
+        
+        // Add the new terminal to the list
+        if (createResult.data) {
+          setTerminals(prevTerminals => [...prevTerminals, createResult.data!]);
+        }
+        
+        Alert.alert('Success', 'Terminal added successfully');
+      }
+      
+      setShowTerminalModal(false);
+      setSelectedTerminal(null);
+    } catch (error: any) {
+      console.error('Save terminal error:', error);
+      Alert.alert('Error', error.message || 'Failed to save terminal');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelfUnassign = async () => {
+    try {
+      // Confirm with the user before unassigning
+      Alert.alert(
+        'Confirm Unassign',
+        'Are you sure you want to unassign yourself from this rank? You will no longer be able to manage it.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Unassign',
+            style: 'destructive',
+            onPress: async () => {
+              setIsLoading(true);
+              
+              const result = await adminService.selfUnassignFromRank(rankId);
+              
+              if (!result.success) {
+                throw new Error(result.error || 'Failed to unassign from rank');
+              }
+              
+              Alert.alert('Success', 'You have been unassigned from this rank');
+              // Navigate back after successful unassignment
+              navigation.goBack();
+            }
+          }
+        ]
       );
-    } else {
-      updatedTerminals = [...terminals, terminal];
-    }
-    
-    setTerminals(updatedTerminals);
-    if (rankDetails) {
-      setRankDetails({
-        ...rankDetails,
-        terminals: updatedTerminals
-      });
-    }
-    setShowTerminalModal(false);
-    setSelectedTerminal(null);
-    
-    // Auto-save changes if in edit mode
-    if (isEditing) {
-      handleSave();
+    } catch (error: any) {
+      console.error('Self-unassign error:', error);
+      Alert.alert('Error', error.message || 'Failed to unassign from rank');
+      setIsLoading(false);
     }
   };
 
@@ -351,36 +457,6 @@ const ManageRankScreen: React.FC = () => {
           </View>
         </View>
         
-        <View style={styles.row}>
-          <View style={[styles.formGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Opening Time</Text>
-            <FormInput
-              value={openTime}
-              onChangeText={setOpenTime}
-              placeholder="e.g., 06:00"
-              editable={isEditing}
-              style={[styles.input, !isEditing && styles.disabledInput]}
-            />
-          </View>
-          
-          <View style={[styles.formGroup, styles.halfWidth]}>
-            <Text style={styles.label}>Closing Time</Text>
-            <FormInput
-              value={closeTime}
-              onChangeText={setCloseTime}
-              placeholder="e.g., 19:00"
-              editable={isEditing}
-              style={[styles.input, !isEditing && styles.disabledInput]}
-            />
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderContactTab = () => {
-    return (
-      <View style={styles.tabContent}>
         <View style={styles.formGroup}>
           <Text style={styles.label}>Contact Phone</Text>
           <FormInput
@@ -404,6 +480,47 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, !isEditing && styles.disabledInput]}
           />
         </View>
+        
+        <View style={styles.row}>
+          <View style={[styles.formGroup, styles.halfWidth]}>
+            <Text style={styles.label}>Opening Time</Text>
+            <FormInput
+              value={openTime}
+              onChangeText={setOpenTime}
+              placeholder="e.g., 06:00"
+              editable={isEditing}
+              style={[styles.input, !isEditing && styles.disabledInput]}
+            />
+          </View>
+          
+          <View style={[styles.formGroup, styles.halfWidth]}>
+            <Text style={styles.label}>Closing Time</Text>
+            <FormInput
+              value={closeTime}
+              onChangeText={setCloseTime}
+              placeholder="e.g., 19:00"
+              editable={isEditing}
+              style={[styles.input, !isEditing && styles.disabledInput]}
+            />
+          </View>
+        </View>
+
+        {/* Self-unassign button at the bottom */}
+        {!isEditing && (
+          <View style={styles.selfUnassignContainer}>
+            <TouchableOpacity 
+              style={styles.selfUnassignButton}
+              onPress={handleSelfUnassign}
+            >
+              <Text style={styles.selfUnassignButtonText}>
+                Unassign myself from this rank
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.selfUnassignNote}>
+              Note: You will no longer be able to manage this rank after unassigning.
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -431,6 +548,7 @@ const ManageRankScreen: React.FC = () => {
                 isEditing={isEditing}
                 onEdit={handleEditTerminal}
                 onDelete={handleDeleteTerminal}
+                onToggleActive={handleToggleTerminalActive}
               />
             ))}
             <View style={styles.bottomSpacer} />
@@ -440,16 +558,45 @@ const ManageRankScreen: React.FC = () => {
     );
   };
 
+  // Handle toggling terminal active status
+  const handleToggleTerminalActive = async (terminalId: number, isActive: boolean) => {
+    try {
+      setIsLoading(true);
+      
+      // Call the API to update terminal status
+      const updateResult = await adminService.updateTerminalStatus(rankId, terminalId, isActive);
+      
+      if (!updateResult.success) {
+        throw new Error(updateResult.error || 'Failed to update terminal status');
+      }
+      
+      // Update the terminals list with the new status
+      setTerminals(prevTerminals => 
+        prevTerminals.map(t => 
+          t.id === terminalId ? { ...t, isActive } : t
+        )
+      );
+      
+      Alert.alert(
+        'Success', 
+        `Terminal ${isActive ? 'activated' : 'deactivated'} successfully`
+      );
+    } catch (error: any) {
+      console.error('Toggle terminal status error:', error);
+      Alert.alert('Error', error.message || 'Failed to update terminal status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'details':
         return renderDetailsTab();
-      case 'contact':
-        return renderContactTab();
       case 'terminals':
         return renderTerminalsTab();
       default:
-        return null;
+        return renderDetailsTab();
     }
   };
 
@@ -479,12 +626,22 @@ const ManageRankScreen: React.FC = () => {
           >
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
+        ) : activeTab === 'terminals' ? (
+          <TouchableOpacity 
+            style={styles.doneButton}
+            onPress={() => setIsEditing(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
         ) : (
           <View style={styles.spacer} />
         )}
       </View>
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[
+        styles.scrollContent, 
+        isEditing && activeTab !== 'terminals' && styles.scrollContentWithButtons
+      ]}>
         {/* Map placeholder as full-width element */}
         <View style={styles.mapPlaceholder}>
           <Text style={styles.mapPlaceholderText}>
@@ -493,25 +650,12 @@ const ManageRankScreen: React.FC = () => {
         </View>
         
         <View style={styles.contentContainer}>
-          <View style={styles.rankImageSection}>
-            {rankDetails?.imageUrl ? (
-              <Image 
-                source={{ uri: rankDetails.imageUrl }} 
-                style={styles.rankImage} 
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.rankImagePlaceholder}>
-                <Text style={styles.rankImagePlaceholderText}>
-                  {rankDetails?.name?.charAt(0) || 'R'}
-                </Text>
-              </View>
-            )}
+          <View style={styles.rankInfoSection}>
             <Text style={styles.rankName}>{rankDetails?.name}</Text>
             <Text style={styles.rankLocation}>{rankDetails?.city}, {rankDetails?.province}</Text>
           </View>
           
-          {/* Navigation tabs */}
+          {/* Navigation tabs - without Contact tab */}
           <View style={styles.tabContainer}>
             <TouchableOpacity 
               style={[styles.tab, activeTab === 'details' && styles.activeTab]}
@@ -519,15 +663,6 @@ const ManageRankScreen: React.FC = () => {
             >
               <Text style={[styles.tabText, activeTab === 'details' && styles.activeTabText]}>
                 Details
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'contact' && styles.activeTab]}
-              onPress={() => setActiveTab('contact')}
-            >
-              <Text style={[styles.tabText, activeTab === 'contact' && styles.activeTabText]}>
-                Contact
               </Text>
             </TouchableOpacity>
             
@@ -543,31 +678,31 @@ const ManageRankScreen: React.FC = () => {
           
           {/* Tab content */}
           {renderTabContent()}
-          
-          {/* Action buttons */}
-          {isEditing && (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity 
-                style={[styles.cancelButton, isLoading && styles.disabledButton]}
-                onPress={handleCancel}
-                disabled={isLoading}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.saveButton, isLoading && styles.disabledButton]}
-                onPress={handleSave}
-                disabled={isLoading}
-              >
-                <Text style={styles.saveButtonText}>
-                  {isLoading ? 'Saving...' : 'Save Changes'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </ScrollView>
+      
+      {/* Fixed Bottom Action Buttons */}
+      {isEditing && activeTab !== 'terminals' && (
+        <View style={styles.fixedActionButtons}>
+          <TouchableOpacity 
+            style={[styles.cancelButton, isLoading && styles.disabledButton]}
+            onPress={handleCancel}
+            disabled={isLoading}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.saveButton, isLoading && styles.disabledButton]}
+            onPress={handleSave}
+            disabled={isLoading}
+          >
+            <Text style={styles.saveButtonText}>
+              {isLoading ? 'Saving...' : 'Save Changes'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
       
       {/* Terminal Editor Modal */}
       <TerminalEditorModal
@@ -612,6 +747,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  scrollContentWithButtons: {
+    paddingBottom: 150, // Increased padding to account for buttons at 25% from bottom
+  },
   contentContainer: {
     padding: 20,
     paddingTop: 0,
@@ -637,6 +775,14 @@ const styles = StyleSheet.create({
     color: '#e3ac34',
     fontWeight: '500',
   },
+  doneButton: {
+    padding: 8,
+  },
+  doneButtonText: {
+    fontSize: 16,
+    color: '#e3ac34',
+    fontWeight: '500',
+  },
   spacer: {
     width: 40,
   },
@@ -647,7 +793,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     position: 'relative',
-    marginBottom: -58,
+    marginBottom: 20,
   },
   mapPlaceholderText: {
     fontSize: 16,
@@ -743,30 +889,26 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
-  rankImageSection: {
+  fixedActionButtons: {
+    position: 'absolute',
+    bottom: '1%',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  rankInfoSection: {
     alignItems: 'center',
     marginBottom: 20,
-    marginTop: -40,
-  },
-  rankImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 15,
-  },
-  rankImagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    backgroundColor: '#e3ac34',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  rankImagePlaceholderText: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   rankName: {
     fontSize: 22,
@@ -791,6 +933,29 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 20,
+  },
+  selfUnassignContainer: {
+    marginTop: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 20,
+  },
+  selfUnassignButton: {
+    backgroundColor: '#f8d7da',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  selfUnassignButtonText: {
+    color: '#721c24',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  selfUnassignNote: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
