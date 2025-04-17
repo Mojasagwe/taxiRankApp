@@ -51,4 +51,19 @@ jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({
   },
 }), { virtual: true });
 
-// Mock any other problematic libraries as needed 
+// Mock any other problematic libraries as needed
+
+// Mock react-native-date-picker
+jest.mock('react-native-date-picker', () => {
+  const MockDatePicker = jest.fn().mockImplementation(props => {
+    return {
+      type: 'DatePicker',
+      props: { ...props },
+    };
+  });
+  
+  // Add any methods or properties the component needs
+  MockDatePicker.prototype.render = jest.fn();
+  
+  return MockDatePicker;
+}); 
