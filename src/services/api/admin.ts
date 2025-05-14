@@ -12,6 +12,7 @@ import {
   RankDetails,
   TaxiTerminal
 } from '../../types/admin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const adminService = {
   // Get dashboard statistics
@@ -393,5 +394,46 @@ export const adminService = {
         message: 'Could not upload rank image'
       };
     }
-  }
+  },
+
+  // Request to be assigned to a rank
+  requestRankAssignment: async (params: {
+    rankId?: number;
+    rankCode?: string;
+    requestReason: string;
+  }): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    data?: any;
+  }> => {
+    try {
+      // Get the current user data from AsyncStorage for debugging
+      const userDataString = await AsyncStorage.getItem('userData');
+      const userData = userDataString ? JSON.parse(userDataString) : null;
+      
+      // Log detailed information for debugging
+      console.log('Requesting rank assignment with:');
+      console.log('- Request params:', params);
+      console.log('- User data available:', !!userData);
+      if (userData) {
+        console.log('- User ID:', userData.id);
+        console.log('- User role:', userData.role);
+      }
+      
+      // We trust the authentication token will identify the admin
+      // The token is automatically included via the axios interceptor
+      const response = await api.post('/rank-assignment-requests', params);
+      
+      console.log('Rank assignment response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Rank assignment request error:', error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to request rank assignment',
+        message: 'Could not submit rank assignment request'
+      };
+    }
+  },
 }; 

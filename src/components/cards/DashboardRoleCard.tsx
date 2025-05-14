@@ -15,8 +15,8 @@ interface DashboardRoleCardProps {
 }
 
 const { width } = Dimensions.get('window');
-// Reduce card width by 50% from previous size
-const cardWidth = width * 0.425;
+// Set card width to be slightly less than half the screen width
+const cardWidth = width * 0.42;
 
 const DashboardRoleCard: React.FC<DashboardRoleCardProps> = ({ 
   title, 
