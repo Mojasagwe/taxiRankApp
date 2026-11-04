@@ -33,12 +33,17 @@ export const authService = {
     return user;
   },
 
+  /** The server revokes every older token and returns a new one for this phone */
   changePassword: async (currentPassword: string, newPassword: string): Promise<User> => {
-    const response = await api.post<ApiResponse<User>>('/auth/change-password', { currentPassword, newPassword });
-    const user = response.data.data!;
-    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
-    return user;
+    const response = await api.post<ApiResponse<AuthPayload>>('/auth/change-password', { currentPassword, newPassword });
+    return saveSession(response.data.data!);
   },
+
+  storeUser: async (user: User): Promise<void> => {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+  },
+
+  token: (): Promise<string | null> => AsyncStorage.getItem(TOKEN_KEY),
 
   /** The user saved at the last login, if a token is still stored */
   storedUser: async (): Promise<User | null> => {

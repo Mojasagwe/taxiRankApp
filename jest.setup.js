@@ -67,3 +67,18 @@ jest.mock('react-native-date-picker', () => {
   
   return MockDatePicker;
 }); 
+// Native photo picker: tests drive the callbacks themselves
+jest.mock('react-native-image-picker', () => ({
+  launchCamera: jest.fn(),
+  launchImageLibrary: jest.fn(),
+}));
+
+// Safe-area insets without a native provider
+jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
+
+// GPS: tests set positions through the mock
+jest.mock('@react-native-community/geolocation', () => ({
+  getCurrentPosition: jest.fn(),
+  watchPosition: jest.fn(),
+  clearWatch: jest.fn(),
+}));

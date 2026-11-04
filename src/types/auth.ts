@@ -9,11 +9,13 @@ export type Permission =
   | 'APPLICATIONS_SUBMIT'
   | 'RANKS_MANAGE'
   | 'RANK_MANAGE_OWN'
-  | 'ROUTES_MANAGE';
+  | 'ROUTES_MANAGE'
+  | 'TRIPS_OWN';
 
 export type ProfileCode = 'SYSTEM_ADMIN' | 'RANK_ADMIN' | 'COMMUTER';
 
-export type AccountStatus = 'ACTIVE' | 'FLAGGED' | 'SUSPENDED' | 'BLOCKED';
+/** DELETED: the holder deleted their account; personal data is erased */
+export type AccountStatus = 'ACTIVE' | 'FLAGGED' | 'SUSPENDED' | 'BLOCKED' | 'DELETED';
 
 export interface RankSummary {
   id: number;
@@ -41,6 +43,8 @@ export interface User {
   rank?: RankSummary;
   responsiblePersonName?: string;
   responsiblePersonPhone?: string;
+  /** Relative to the server root (/api/users/7/photo?v=…); changes with every new photo */
+  photoUrl?: string;
   lastLogin?: string;
   createdAt?: string;
 }
@@ -75,8 +79,11 @@ export interface AuthContextType {
   signUpIntent: SignUpIntent | null;
   login: (identifier: string, password: string) => Promise<User>;
   register: (data: RegisterRequest, intent: SignUpIntent) => Promise<User>;
+  /** Signs out every other session; this one gets a fresh token */
   changePassword: (currentPassword: string, newPassword: string) => Promise<User>;
   refreshUser: () => Promise<void>;
+  /** Keep the session in step after the user edits their own account */
+  updateUser: (user: User) => Promise<void>;
   logout: () => Promise<void>;
   can: (permission: Permission) => boolean;
   clearSignUpIntent: () => void;

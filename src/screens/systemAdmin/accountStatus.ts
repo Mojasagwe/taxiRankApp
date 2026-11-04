@@ -5,6 +5,7 @@ export const STATUS_LABEL: Record<AccountStatus, string> = {
   FLAGGED: 'Flagged',
   SUSPENDED: 'Suspended',
   BLOCKED: 'Blocked',
+  DELETED: 'Deleted',
 };
 
 export const STATUS_TONE: Record<AccountStatus, 'success' | 'alert' | 'danger' | 'dark'> = {
@@ -12,6 +13,7 @@ export const STATUS_TONE: Record<AccountStatus, 'success' | 'alert' | 'danger' |
   FLAGGED: 'alert',
   SUSPENDED: 'danger',
   BLOCKED: 'dark',
+  DELETED: 'dark',
 };
 
 export const STATUS_HELP: Record<AccountStatus, string> = {
@@ -19,6 +21,7 @@ export const STATUS_HELP: Record<AccountStatus, string> = {
   FLAGGED: 'Still works, but marked for review. Use for complaints or suspicious changes.',
   SUSPENDED: "Can't log in until reactivated. Rank info stays visible to commuters.",
   BLOCKED: 'Permanently locked. A rank needs a new account through a new application.',
+  DELETED: 'Deleted by its holder. Personal details are erased and it cannot be changed.',
 };
 
 export const EVENT_LABEL: Record<string, string> = {
@@ -29,4 +32,5 @@ export const EVENT_LABEL: Record<string, string> = {
   PROFILE_CHANGED: 'Profile changed',
   DETAILS_CHANGED: 'Details changed',
   RESPONSIBLE_PERSON_CHANGED: 'Responsible person changed',
+  ACCOUNT_DELETED: 'Account deleted',
 };

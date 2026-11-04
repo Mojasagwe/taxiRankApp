@@ -34,6 +34,24 @@ export interface TaxiTerminal {
   isActive: boolean; // Whether this terminal is active
   createdAt: string;
   updatedAt: string;
+  /** Where the route ends: a map point and/or the rank it ends at */
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+  destinationPlaceId?: string | null;
+  endsAtRankId?: number | null;
+  endsAtRankName?: string;
+  bay?: string | null;
+  /** The rank's word: a taxi leaves about every N minutes */
+  intervalMinutes?: number | null;
+  /** false = paused today only */
+  runningToday?: boolean;
+  /** "HH:mm" or "HH:mm:ss" */
+  firstTaxi?: string | null;
+  lastTaxiWeekday?: string | null;
+  lastTaxiSaturday?: string | null;
+  lastTaxiSunday?: string | null;
+  /** Rank admin view only: riders paying a different fare since the rank last confirmed it */
+  fareReport?: { reportedFare: number; reports: number } | null;
 }
 
 export interface RankDetails extends Rank {

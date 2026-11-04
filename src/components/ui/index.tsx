@@ -1,7 +1,10 @@
 import React from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, ScrollView, StyleSheet, Text, TextInput, TextInputProps, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, KeyboardAvoidingView, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, TextInputProps, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Edge, SafeAreaView } from 'react-native-safe-area-context';
 import { colors, radius } from '../../theme';
+
+// A tab bar below the screen already keeps clear of the bottom inset
+const TABBED_EDGES: Edge[] = ['top', 'left', 'right'];
 
 /** Page frame: title bar with optional back and right-hand action, scrollable body, optional footer */
 export const Screen: React.FC<{
@@ -11,10 +14,15 @@ export const Screen: React.FC<{
   right?: React.ReactNode;
   footer?: React.ReactNode;
   scroll?: boolean;
+  /** Set on screens shown above a tab bar */
+  tabbed?: boolean;
+  /** Pull to refresh */
+  refreshing?: boolean;
+  onRefresh?: () => void;
   children: React.ReactNode;
-}> = ({ title, subtitle, onBack, right, footer, scroll = true, children }) => {
+}> = ({ title, subtitle, onBack, right, footer, scroll = true, tabbed = false, refreshing, onRefresh, children }) => {
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={tabbed ? TABBED_EDGES : undefined}>
       <View style={styles.header}>
         {onBack ? (
           <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back" onPress={onBack} style={styles.back}>
@@ -36,6 +44,9 @@ export const Screen: React.FC<{
             contentContainerStyle={styles.bodyContent}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            refreshControl={
+              onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} colors={[colors.ink]} /> : undefined
+            }
           >
             {children}
           </ScrollView>
@@ -48,7 +59,8 @@ export const Screen: React.FC<{
   );
 };
 
-type ButtonVariant = 'primary' | 'secondary' | 'info' | 'danger' | 'link';
+/** destructive: filled red, for the final step of something that can't be undone */
+type ButtonVariant = 'primary' | 'secondary' | 'info' | 'danger' | 'destructive' | 'link';
 
 export const Button: React.FC<{
   title: string;
@@ -68,7 +80,7 @@ export const Button: React.FC<{
     style={[styles.button, buttonStyles[variant], (disabled || loading) && styles.disabled, style]}
   >
     {loading ? (
-      <ActivityIndicator color={variant === 'primary' ? colors.gold : colors.ink} />
+      <ActivityIndicator color={variant === 'primary' ? colors.gold : variant === 'destructive' ? '#ffffff' : colors.ink} />
     ) : (
       <Text style={[styles.buttonText, buttonTextStyles[variant]]}>{title}</Text>
     )}
@@ -160,6 +172,106 @@ export function Segmented<T extends string>({
   );
 }
 
+/** Tappable row in a grouped list (menus, settings) */
+export const ListRow: React.FC<{
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  tone?: 'default' | 'danger';
+  last?: boolean;
+  testID?: string;
+}> = ({ title, subtitle, onPress, tone = 'default', last = false, testID }) => (
+  <TouchableOpacity
+    testID={testID}
+    accessibilityRole="button"
+    accessibilityHint={subtitle}
+    onPress={onPress}
+    style={[styles.row, !last && styles.rowDivider]}
+  >
+    <View style={styles.rowText}>
+      <Text style={[styles.rowTitle, tone === 'danger' && styles.dangerText]}>{title}</Text>
+      {subtitle ? <Text style={[styles.rowSubtitle, tone === 'danger' && styles.dangerSub]}>{subtitle}</Text> : null}
+    </View>
+    <Text style={[styles.chevron, tone === 'danger' && styles.dangerText]} importantForAccessibility="no">›</Text>
+  </TouchableOpacity>
+);
+
+/** One option in a list where a single one is picked (radio behaviour) */
+export const ChoiceRow: React.FC<{
+  title: string;
+  subtitle?: string;
+  trailing?: string;
+  selected: boolean;
+  onPress: () => void;
+  last?: boolean;
+}> = ({ title, subtitle, trailing, selected, onPress, last = false }) => (
+  <TouchableOpacity
+    accessibilityRole="radio"
+    accessibilityState={{ checked: selected }}
+    onPress={onPress}
+    style={[styles.row, !last && styles.rowDivider, selected && styles.rowSelected]}
+  >
+    <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.radioDot} /> : null}</View>
+    <View style={styles.rowText}>
+      <Text style={styles.rowTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+    </View>
+    {trailing ? <Text style={styles.trailing}>{trailing}</Text> : null}
+  </TouchableOpacity>
+);
+
+/** On/off setting with an explanation */
+export const SwitchRow: React.FC<{
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+  last?: boolean;
+}> = ({ title, subtitle, value, onValueChange, disabled = false, last = false }) => (
+  // The whole row toggles, as in Android settings; the switch alone is a small target
+  <TouchableOpacity
+    accessibilityRole="switch"
+    accessibilityLabel={title}
+    accessibilityHint={subtitle}
+    accessibilityState={{ checked: value, disabled }}
+    onPress={() => onValueChange(!value)}
+    disabled={disabled}
+    activeOpacity={0.7}
+    style={[styles.row, !last && styles.rowDivider]}
+  >
+    <View style={styles.rowText}>
+      <Text style={styles.rowTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+    </View>
+    <Switch
+      importantForAccessibility="no-hide-descendants"
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      trackColor={{ false: '#d6d4ce', true: colors.ink }}
+      thumbColor={value ? colors.gold : colors.surface}
+    />
+  </TouchableOpacity>
+);
+
+/** Small labelled values side by side, e.g. Leaves in · Ride · Last taxi */
+export const FactGrid: React.FC<{ facts: { label: string; value: string }[]; inverted?: boolean }> = ({ facts, inverted = false }) => (
+  <View style={styles.facts}>
+    {facts.map(f => (
+      <View key={f.label} style={styles.fact} accessible accessibilityLabel={`${f.label}: ${f.value}`}>
+        <Text style={[styles.factLabel, inverted && styles.factLabelInverted]}>{f.label}</Text>
+        <Text style={[styles.factValue, inverted && styles.factValueInverted]}>{f.value}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+/** White rounded block that holds ListRows or SwitchRows */
+export const Group: React.FC<{ children: React.ReactNode; style?: ViewStyle }> = ({ children, style }) => (
+  <View style={[styles.group, style]}>{children}</View>
+);
+
 export const Loading: React.FC = () => (
   <View style={styles.loading}>
     <ActivityIndicator size="large" color={colors.gold} />
@@ -175,6 +287,7 @@ const buttonStyles = StyleSheet.create({
   secondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.ink },
   info: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.info },
   danger: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.danger },
+  destructive: { backgroundColor: colors.danger },
   link: { backgroundColor: 'transparent' },
 });
 
@@ -183,6 +296,7 @@ const buttonTextStyles = StyleSheet.create({
   secondary: { color: colors.ink },
   info: { color: colors.info },
   danger: { color: colors.danger },
+  destructive: { color: '#ffffff' },
   link: { color: colors.goldText },
 });
 
@@ -238,4 +352,24 @@ const styles = StyleSheet.create({
   segmentTextOn: { color: colors.gold, fontWeight: '700' },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
   empty: { textAlign: 'center', color: colors.textSubtle, fontSize: 15, paddingVertical: 32 },
+  group: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60, paddingVertical: 10, paddingHorizontal: 16 },
+  rowDivider: { borderBottomWidth: 1, borderBottomColor: '#f0efeb' },
+  rowText: { flex: 1, gap: 3 },
+  rowTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  rowSubtitle: { fontSize: 13, lineHeight: 18, color: colors.textSubtle },
+  chevron: { fontSize: 24, color: colors.textSubtle },
+  dangerText: { color: colors.danger, fontWeight: '700' },
+  dangerSub: { color: '#7f1d1d' },
+  rowSelected: { backgroundColor: '#fbf6e9' },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { borderColor: colors.ink },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.ink },
+  trailing: { fontSize: 16, fontWeight: '800', color: colors.text },
+  facts: { flexDirection: 'row', gap: 8 },
+  fact: { flex: 1, gap: 2 },
+  factLabel: { fontSize: 12, color: colors.textSubtle },
+  factLabelInverted: { color: '#c9c7c0' },
+  factValue: { fontSize: 15, fontWeight: '700', color: colors.text },
+  factValueInverted: { color: '#f5f5f0' },
 });

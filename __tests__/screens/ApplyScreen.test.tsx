@@ -44,7 +44,7 @@ describe('ApplyScreen', () => {
     await waitFor(() =>
       expect(applicationService.submit).toHaveBeenCalledWith({ rankId: 4, designation: 'Association secretary', motivation: undefined }),
     );
-    expect(mockReset).toHaveBeenCalledWith({ index: 1, routes: [{ name: 'Home' }, { name: 'MyApplication' }] });
+    expect(mockReset).toHaveBeenCalledWith({ index: 1, routes: [{ name: 'Tabs' }, { name: 'MyApplication' }] });
   });
 
   it("won't select a rank that already has an admin", async () => {
@@ -91,6 +91,6 @@ describe('ApplyScreen', () => {
     expect(await findByText('Step 2 of 2')).toBeTruthy();
     fireEvent.press(getByText('Skip for now'));
     expect(mockClearSignUpIntent).toHaveBeenCalled();
-    expect(mockReset).toHaveBeenCalledWith({ index: 0, routes: [{ name: 'Home' }] });
+    expect(mockReset).toHaveBeenCalledWith({ index: 0, routes: [{ name: 'Tabs' }] });
   });
 });
