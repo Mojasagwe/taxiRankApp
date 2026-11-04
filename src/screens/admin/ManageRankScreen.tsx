@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RankAdminStackParamList } from '../../navigation/RankAdminNavigator';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/inputs/FormInput';
-import TerminalEditorModal from '../../components/modals/TerminalEditorModal';
 import { PrimaryButton } from '../../components/buttons';
 import { TerminalCard } from '../../components/cards';
 import { RankDetails, TaxiTerminal } from '../../types/admin';
@@ -18,15 +18,12 @@ const ManageRankScreen: React.FC = () => {
   const route = useRoute<ManageRankScreenRouteProp>();
   const { rankId } = route.params;
   const { logout } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RankAdminStackParamList>>();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [rankDetails, setRankDetails] = useState<RankDetails | null>(null);
-
-  // Terminal being edited
-  const [selectedTerminal, setSelectedTerminal] = useState<TaxiTerminal | null>(null);
-  const [showTerminalModal, setShowTerminalModal] = useState(false);
 
   // Form state for rank details
   const [name, setName] = useState('');
@@ -137,9 +134,12 @@ const ManageRankScreen: React.FC = () => {
     }
   }, [rankId]);
 
-  useEffect(() => {
-    fetchRankDetails();
-  }, [fetchRankDetails]);
+  // Also reloads when coming back from the route editor
+  useFocusEffect(
+    useCallback(() => {
+      fetchRankDetails();
+    }, [fetchRankDetails]),
+  );
 
   const handleLogout = () => {
     Alert.alert('Log out?', 'You will need the rank code and password to log in again.', [
@@ -254,15 +254,9 @@ const ManageRankScreen: React.FC = () => {
     }
   };
 
-  const handleAddTerminal = () => {
-    setSelectedTerminal(null);
-    setShowTerminalModal(true);
-  };
+  const handleAddTerminal = () => navigation.navigate('RouteEditor', { rankId });
 
-  const handleEditTerminal = (terminal: TaxiTerminal) => {
-    setSelectedTerminal(terminal);
-    setShowTerminalModal(true);
-  };
+  const handleEditTerminal = (terminal: TaxiTerminal) => navigation.navigate('RouteEditor', { rankId, terminal });
 
   const handleDeleteTerminal = async (terminalId: number) => {
     try {
@@ -301,50 +295,6 @@ const ManageRankScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Delete terminal error:', error);
       Alert.alert('Error', error.message || 'Failed to delete terminal');
-      setIsLoading(false);
-    }
-  };
-
-  const handleTerminalSave = async (terminal: TaxiTerminal) => {
-    try {
-      setIsLoading(true);
-
-      if (selectedTerminal) {
-        // Update existing terminal
-        const updateResult = await adminService.updateTerminal(rankId, terminal.id, terminal);
-
-        if (!updateResult.success) {
-          throw new Error(updateResult.error || 'Failed to update terminal');
-        }
-
-        // Update the terminals list
-        setTerminals(prevTerminals =>
-          prevTerminals.map(t => t.id === terminal.id ? (updateResult.data || terminal) : t)
-        );
-
-        Alert.alert('Success', 'Terminal updated successfully');
-      } else {
-        // Create new terminal
-        const createResult = await adminService.addTerminal(rankId, terminal);
-
-        if (!createResult.success) {
-          throw new Error(createResult.error || 'Failed to add terminal');
-        }
-
-        // Add the new terminal to the list
-        if (createResult.data) {
-          setTerminals(prevTerminals => [...prevTerminals, createResult.data!]);
-        }
-
-        Alert.alert('Success', 'Terminal added successfully');
-      }
-
-      setShowTerminalModal(false);
-      setSelectedTerminal(null);
-    } catch (error: any) {
-      console.error('Save terminal error:', error);
-      Alert.alert('Error', error.message || 'Failed to save terminal');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -472,6 +422,18 @@ const ManageRankScreen: React.FC = () => {
             onPress={handleAddTerminal}
           />
         )}
+
+        {terminals.some(t => t.fareReport) ? (
+          <TouchableOpacity
+            style={styles.fareNotice}
+            accessibilityRole="button"
+            onPress={() => handleEditTerminal(terminals.find(t => t.fareReport)!)}
+          >
+            <Text style={styles.fareNoticeText}>
+              Riders report a different fare on {terminals.filter(t => t.fareReport).length === 1 ? 'a route' : `${terminals.filter(t => t.fareReport).length} routes`}. Tap to check.
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         {terminals.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -642,21 +604,22 @@ const ManageRankScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Terminal Editor Modal */}
-      <TerminalEditorModal
-        visible={showTerminalModal}
-        onClose={() => {
-          setShowTerminalModal(false);
-          setSelectedTerminal(null);
-        }}
-        terminal={selectedTerminal}
-        onSave={handleTerminalSave}
-      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  fareNotice: {
+    backgroundColor: '#fff6dd',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  fareNoticeText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#141414',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',

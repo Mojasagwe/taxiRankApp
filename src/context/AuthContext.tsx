@@ -63,6 +63,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(await authService.me());
   }, []);
 
+  const updateUser = useCallback(async (updated: User) => {
+    await authService.storeUser(updated);
+    setUser(updated);
+  }, []);
+
   const value = useMemo<AuthContextType>(
     () => ({
       user,
@@ -72,11 +77,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       register,
       changePassword,
       refreshUser,
+      updateUser,
       logout,
       can: (permission: Permission) => !!user?.permissions?.includes(permission),
       clearSignUpIntent: () => setSignUpIntent(null),
     }),
-    [user, loading, signUpIntent, login, register, changePassword, refreshUser, logout],
+    [user, loading, signUpIntent, login, register, changePassword, refreshUser, updateUser, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

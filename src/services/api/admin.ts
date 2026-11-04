@@ -207,4 +207,10 @@ export const adminService = {
       };
     }
   },
+
+  /** Answer riders' fare reports: a new fare, or none to say the listed fare is still right */
+  confirmFare: async (rankId: number, terminalId: number, fare?: number): Promise<TaxiTerminal> => {
+    const response = await api.post(`/taxi-ranks/${rankId}/terminals/${terminalId}/confirm-fare`, fare ? { fare } : {});
+    return response.data.data;
+  },
 };

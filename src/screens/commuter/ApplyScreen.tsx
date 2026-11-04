@@ -117,7 +117,7 @@ const ApplyScreen: React.FC = () => {
         await applicationService.submit(request);
       }
       clearSignUpIntent();
-      navigation.reset({ index: 1, routes: [{ name: 'Home' }, { name: 'MyApplication' }] });
+      navigation.reset({ index: 1, routes: [{ name: 'Tabs' }, { name: 'MyApplication' }] });
     } catch (e) {
       setError(apiError(e, 'Could not submit your application'));
       setSubmitting(false);
@@ -126,7 +126,7 @@ const ApplyScreen: React.FC = () => {
 
   const skip = () => {
     clearSignUpIntent();
-    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    navigation.reset({ index: 0, routes: [{ name: 'Tabs' }] });
   };
 
   if (!ranks) {

@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { apiError } from '../../services/api/axios';
 import { Banner, Button, Field, Screen } from '../../components/ui';
+import { PasswordRules, passwordRules } from '../../components/forms';
 import { colors } from '../../theme';
 
 /**
@@ -19,14 +20,10 @@ const ChangePasswordScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const rules = [
-    { ok: next.length >= minLength, text: `At least ${minLength} characters` },
-    { ok: next.length > 0 && next !== current, text: 'Not the temporary password' },
-    { ok: next.length > 0 && next === confirm, text: 'Passwords match' },
-  ];
+  const { rules, valid } = passwordRules(current, next, confirm, { minLength, differentText: 'Not the temporary password' });
 
   const handleSave = async () => {
-    if (!current || rules.some(r => !r.ok)) {
+    if (!valid) {
       setError('Check the requirements below');
       return;
     }
@@ -61,18 +58,13 @@ const ChangePasswordScreen: React.FC = () => {
       <Field testID="current-password-input" label="Temporary password" value={current} onChangeText={setCurrent} secureTextEntry autoCapitalize="none" />
       <Field testID="new-password-input" label="New password" value={next} onChangeText={setNext} secureTextEntry autoCapitalize="none" />
       <Field testID="confirm-password-input" label="Confirm password" value={confirm} onChangeText={setConfirm} secureTextEntry autoCapitalize="none" />
-      {rules.map(rule => (
-        <Text key={rule.text} style={rule.ok ? styles.ruleOk : styles.muted}>
-          {rule.ok ? '✓' : '•'} {rule.text}
-        </Text>
-      ))}
+      <PasswordRules rules={rules} />
       <Text style={styles.muted}>Lost it later? Contact the Travy System Administrator to reset it.</Text>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  ruleOk: { color: colors.success },
   muted: { color: colors.textSubtle },
 });
 
