@@ -1,17 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator
-} from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import { RankAdminStackParamList } from '../../navigation/RankAdminNavigator';
+import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/inputs/FormInput';
 import TerminalEditorModal from '../../components/modals/TerminalEditorModal';
 import { PrimaryButton } from '../../components/buttons';
@@ -20,19 +12,18 @@ import { RankDetails, TaxiTerminal } from '../../types/admin';
 // Import the admin service for API integration
 import { adminService } from '../../services/api/admin';
 
-type ManageRankScreenRouteProp = RouteProp<AdminStackParamList, 'ManageRank'>;
-type ManageRankScreenNavigationProp = NativeStackNavigationProp<AdminStackParamList>;
+type ManageRankScreenRouteProp = RouteProp<RankAdminStackParamList, 'ManageRank'>;
 
 const ManageRankScreen: React.FC = () => {
   const route = useRoute<ManageRankScreenRouteProp>();
-  const navigation = useNavigation<ManageRankScreenNavigationProp>();
   const { rankId } = route.params;
+  const { logout } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [rankDetails, setRankDetails] = useState<RankDetails | null>(null);
-  
+
   // Terminal being edited
   const [selectedTerminal, setSelectedTerminal] = useState<TaxiTerminal | null>(null);
   const [showTerminalModal, setShowTerminalModal] = useState(false);
@@ -71,25 +62,18 @@ const ManageRankScreen: React.FC = () => {
 
     try {
       setIsLoading(true);
-      
-      // First, fetch dashboard stats to get the list of ranks
-      const dashboardResponse = await adminService.getDashboardStats();
-      
-      if (!dashboardResponse.success || !dashboardResponse.data) {
-        throw new Error(dashboardResponse.error || 'Failed to fetch dashboard stats');
+
+      // A rank account only ever manages its own rank
+      const rankResponse = await adminService.getMyRank();
+      if (!rankResponse.success || !rankResponse.data) {
+        throw new Error(rankResponse.error || 'Failed to load your rank');
       }
-      
-      // Find the specific rank from the managed ranks array
-      const rank = dashboardResponse.data.managedRanks.find(r => r.id === rankId);
-      
-      if (!rank) {
-        throw new Error('Rank not found in managed ranks');
-      }
-      
+      const rank = rankResponse.data;
+
       // Extract operating hours into open and close time
       let openTime = '06:00';
       let closeTime = '18:00';
-      
+
       if (rank.operatingHours) {
         const times = rank.operatingHours.split('-');
         if (times.length === 2) {
@@ -97,7 +81,7 @@ const ManageRankScreen: React.FC = () => {
           closeTime = times[1].trim();
         }
       }
-      
+
       // Create a RankDetails object from the rank data
       const rankDetails: RankDetails = {
         id: rank.id,
@@ -119,26 +103,24 @@ const ManageRankScreen: React.FC = () => {
         createdAt: rank.createdAt || new Date().toISOString(),
         updatedAt: rank.updatedAt || new Date().toISOString(),
         terminals: [], // Will be populated below
-        rankAdmins: rank.rankAdmins || [],
-        imageUrl: rank.imageUrl
       };
-      
+
       // Set the rank details
       setRankDetails(rankDetails);
-      
+
       // Set the form state
       setName(rankDetails.name);
-      setDescription(rankDetails.description);
+      setDescription(rankDetails.description ?? '');
       setAddress(rankDetails.address);
       setCity(rankDetails.city);
       setProvince(rankDetails.province);
-      setLatitude(rankDetails.latitude.toString());
-      setLongitude(rankDetails.longitude.toString());
-      setContactPhone(rankDetails.contactPhone);
-      setContactEmail(rankDetails.contactEmail);
+      setLatitude(rankDetails.latitude?.toString() ?? '');
+      setLongitude(rankDetails.longitude?.toString() ?? '');
+      setContactPhone(rankDetails.contactPhone ?? '');
+      setContactEmail(rankDetails.contactEmail ?? '');
       setOpenTime(rankDetails.openTime);
       setCloseTime(rankDetails.closeTime);
-      
+
       // Try to fetch terminals, but continue even if it fails
       const terminalsSuccess = await fetchTerminals();
       if (!terminalsSuccess) {
@@ -146,7 +128,7 @@ const ManageRankScreen: React.FC = () => {
         setTerminals([]);
         console.warn('Using empty terminals list due to fetch failure');
       }
-      
+
     } catch (error) {
       console.error('Failed to fetch rank details:', error);
       Alert.alert('Error', 'Failed to fetch rank details');
@@ -159,45 +141,48 @@ const ManageRankScreen: React.FC = () => {
     fetchRankDetails();
   }, [fetchRankDetails]);
 
-  const handleBack = () => {
-    navigation.goBack();
+  const handleLogout = () => {
+    Alert.alert('Log out?', 'You will need the rank code and password to log in again.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log out', style: 'destructive', onPress: logout },
+    ]);
   };
-  
+
   const handleEdit = () => {
     setIsEditing(true);
   };
-  
+
   const handleCancel = () => {
     if (rankDetails) {
       // Reset form state to original values
       setName(rankDetails.name);
-      setDescription(rankDetails.description);
+      setDescription(rankDetails.description ?? '');
       setAddress(rankDetails.address);
       setCity(rankDetails.city);
       setProvince(rankDetails.province);
-      setLatitude(rankDetails.latitude.toString());
-      setLongitude(rankDetails.longitude.toString());
-      setContactPhone(rankDetails.contactPhone);
-      setContactEmail(rankDetails.contactEmail);
+      setLatitude(rankDetails.latitude?.toString() ?? '');
+      setLongitude(rankDetails.longitude?.toString() ?? '');
+      setContactPhone(rankDetails.contactPhone ?? '');
+      setContactEmail(rankDetails.contactEmail ?? '');
       setOpenTime(rankDetails.openTime);
       setCloseTime(rankDetails.closeTime);
     }
     setIsEditing(false);
   };
-  
+
   const handleSave = async () => {
     try {
-      if (!rankDetails) return;
-      
+      if (!rankDetails) {return;}
+
       setIsLoading(true);
-      
+
       // Basic validation
       if (!name || !description || !address || !city || !province) {
         Alert.alert('Error', 'All fields are required');
         setIsLoading(false);
         return;
       }
-      
+
       // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (contactEmail && !emailRegex.test(contactEmail)) {
@@ -205,7 +190,7 @@ const ManageRankScreen: React.FC = () => {
         setIsLoading(false);
         return;
       }
-      
+
       // Update rank details
       const updatedRankDetails: RankDetails = {
         ...rankDetails,
@@ -221,38 +206,44 @@ const ManageRankScreen: React.FC = () => {
         openTime,
         closeTime,
         terminals,
-        operatingHours: `${openTime}-${closeTime}`
+        operatingHours: `${openTime}-${closeTime}`,
       };
-      
+
       // Call the API to update rank details
-      const updateResult = await adminService.updateRankDetails(rankId, {
+      // The code must be sent unchanged; it is the rank account's login
+      const updateResult = await adminService.updateRank(rankId, {
+        code: rankDetails.code,
         name: updatedRankDetails.name,
-        description: updatedRankDetails.description,
+        // Blank optional fields are sent as unset; the backend rejects empty phone numbers and zero capacity
+        description: updatedRankDetails.description || undefined,
         address: updatedRankDetails.address,
         city: updatedRankDetails.city,
         province: updatedRankDetails.province,
         latitude: updatedRankDetails.latitude,
         longitude: updatedRankDetails.longitude,
-        contactPhone: updatedRankDetails.contactPhone,
-        contactEmail: updatedRankDetails.contactEmail,
+        contactPhone: updatedRankDetails.contactPhone?.trim() || undefined,
+        contactEmail: updatedRankDetails.contactEmail?.trim() || undefined,
         operatingHours: updatedRankDetails.operatingHours,
-        capacity: updatedRankDetails.capacity,
-        isActive: updatedRankDetails.isActive
+        capacity: updatedRankDetails.capacity || undefined,
+        isActive: updatedRankDetails.isActive,
       });
-      
+
       if (!updateResult.success) {
         throw new Error(updateResult.error || 'Failed to update rank details');
       }
-      
+
       // Update local state with the response data
       if (updateResult.data) {
         // For terminals, keep the current terminals state as it's managed separately
         setRankDetails({
+          ...rankDetails!,
           ...updateResult.data,
-          terminals
+          openTime,
+          closeTime,
+          terminals,
         });
       }
-      
+
       setIsEditing(false);
       Alert.alert('Success', 'Rank details updated successfully');
     } catch (error: any) {
@@ -282,29 +273,29 @@ const ManageRankScreen: React.FC = () => {
         [
           {
             text: 'Cancel',
-            style: 'cancel'
+            style: 'cancel',
           },
           {
             text: 'Delete',
             style: 'destructive',
             onPress: async () => {
               setIsLoading(true);
-              
+
               const deleteResult = await adminService.deleteTerminal(rankId, terminalId);
-              
+
               if (!deleteResult.success) {
                 throw new Error(deleteResult.error || 'Failed to delete terminal');
               }
-              
+
               // Remove the terminal from the list
-              setTerminals(prevTerminals => 
+              setTerminals(prevTerminals =>
                 prevTerminals.filter(t => t.id !== terminalId)
               );
-              
+
               Alert.alert('Success', 'Terminal deleted successfully');
               setIsLoading(false);
-            }
-          }
+            },
+          },
         ]
       );
     } catch (error: any) {
@@ -317,80 +308,43 @@ const ManageRankScreen: React.FC = () => {
   const handleTerminalSave = async (terminal: TaxiTerminal) => {
     try {
       setIsLoading(true);
-      
+
       if (selectedTerminal) {
         // Update existing terminal
         const updateResult = await adminService.updateTerminal(rankId, terminal.id, terminal);
-        
+
         if (!updateResult.success) {
           throw new Error(updateResult.error || 'Failed to update terminal');
         }
-        
+
         // Update the terminals list
-        setTerminals(prevTerminals => 
+        setTerminals(prevTerminals =>
           prevTerminals.map(t => t.id === terminal.id ? (updateResult.data || terminal) : t)
         );
-        
+
         Alert.alert('Success', 'Terminal updated successfully');
       } else {
         // Create new terminal
         const createResult = await adminService.addTerminal(rankId, terminal);
-        
+
         if (!createResult.success) {
           throw new Error(createResult.error || 'Failed to add terminal');
         }
-        
+
         // Add the new terminal to the list
         if (createResult.data) {
           setTerminals(prevTerminals => [...prevTerminals, createResult.data!]);
         }
-        
+
         Alert.alert('Success', 'Terminal added successfully');
       }
-      
+
       setShowTerminalModal(false);
       setSelectedTerminal(null);
     } catch (error: any) {
       console.error('Save terminal error:', error);
       Alert.alert('Error', error.message || 'Failed to save terminal');
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSelfUnassign = async () => {
-    try {
-      // Confirm with the user before unassigning
-      Alert.alert(
-        'Confirm Unassign',
-        'Are you sure you want to unassign yourself from this rank? You will no longer be able to manage it.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel'
-          },
-          {
-            text: 'Unassign',
-            style: 'destructive',
-            onPress: async () => {
-              setIsLoading(true);
-              
-              const result = await adminService.selfUnassignFromRank(rankId);
-              
-              if (!result.success) {
-                throw new Error(result.error || 'Failed to unassign from rank');
-              }
-              
-              Alert.alert('Success', 'You have been unassigned from this rank');
-              // Navigate back after successful unassignment
-              navigation.goBack();
-            }
-          }
-        ]
-      );
-    } catch (error: any) {
-      console.error('Self-unassign error:', error);
-      Alert.alert('Error', error.message || 'Failed to unassign from rank');
       setIsLoading(false);
     }
   };
@@ -408,7 +362,7 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, !isEditing && styles.disabledInput]}
           />
         </View>
-        
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Description</Text>
           <FormInput
@@ -421,7 +375,7 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, styles.textArea, !isEditing && styles.disabledInput]}
           />
         </View>
-        
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Address</Text>
           <FormInput
@@ -432,7 +386,7 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, !isEditing && styles.disabledInput]}
           />
         </View>
-        
+
         <View style={styles.row}>
           <View style={[styles.formGroup, styles.halfWidth]}>
             <Text style={styles.label}>City</Text>
@@ -444,7 +398,7 @@ const ManageRankScreen: React.FC = () => {
               style={[styles.input, !isEditing && styles.disabledInput]}
             />
           </View>
-          
+
           <View style={[styles.formGroup, styles.halfWidth]}>
             <Text style={styles.label}>Province</Text>
             <FormInput
@@ -456,7 +410,7 @@ const ManageRankScreen: React.FC = () => {
             />
           </View>
         </View>
-        
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Contact Phone</Text>
           <FormInput
@@ -468,7 +422,7 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, !isEditing && styles.disabledInput]}
           />
         </View>
-        
+
         <View style={styles.formGroup}>
           <Text style={styles.label}>Contact Email</Text>
           <FormInput
@@ -480,7 +434,7 @@ const ManageRankScreen: React.FC = () => {
             style={[styles.input, !isEditing && styles.disabledInput]}
           />
         </View>
-        
+
         <View style={styles.row}>
           <View style={[styles.formGroup, styles.halfWidth]}>
             <Text style={styles.label}>Opening Time</Text>
@@ -492,7 +446,7 @@ const ManageRankScreen: React.FC = () => {
               style={[styles.input, !isEditing && styles.disabledInput]}
             />
           </View>
-          
+
           <View style={[styles.formGroup, styles.halfWidth]}>
             <Text style={styles.label}>Closing Time</Text>
             <FormInput
@@ -505,22 +459,6 @@ const ManageRankScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Self-unassign button at the bottom */}
-        {!isEditing && (
-          <View style={styles.selfUnassignContainer}>
-            <TouchableOpacity 
-              style={styles.selfUnassignButton}
-              onPress={handleSelfUnassign}
-            >
-              <Text style={styles.selfUnassignButtonText}>
-                Unassign myself from this rank
-              </Text>
-            </TouchableOpacity>
-            <Text style={styles.selfUnassignNote}>
-              Note: You will no longer be able to manage this rank after unassigning.
-            </Text>
-          </View>
-        )}
       </View>
     );
   };
@@ -529,12 +467,12 @@ const ManageRankScreen: React.FC = () => {
     return (
       <View style={styles.tabContent}>
         {isEditing && (
-          <PrimaryButton 
+          <PrimaryButton
             title="Add New Terminal"
             onPress={handleAddTerminal}
           />
         )}
-        
+
         {terminals.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No terminals added yet</Text>
@@ -542,7 +480,7 @@ const ManageRankScreen: React.FC = () => {
         ) : (
           <>
             {terminals.map(terminal => (
-              <TerminalCard 
+              <TerminalCard
                 key={terminal.id}
                 terminal={terminal}
                 isEditing={isEditing}
@@ -562,23 +500,23 @@ const ManageRankScreen: React.FC = () => {
   const handleToggleTerminalActive = async (terminalId: number, isActive: boolean) => {
     try {
       setIsLoading(true);
-      
+
       // Call the API to update terminal status
       const updateResult = await adminService.updateTerminalStatus(rankId, terminalId, isActive);
-      
+
       if (!updateResult.success) {
         throw new Error(updateResult.error || 'Failed to update terminal status');
       }
-      
+
       // Update the terminals list with the new status
-      setTerminals(prevTerminals => 
-        prevTerminals.map(t => 
+      setTerminals(prevTerminals =>
+        prevTerminals.map(t =>
           t.id === terminalId ? { ...t, isActive } : t
         )
       );
-      
+
       Alert.alert(
-        'Success', 
+        'Success',
         `Terminal ${isActive ? 'activated' : 'deactivated'} successfully`
       );
     } catch (error: any) {
@@ -612,22 +550,22 @@ const ManageRankScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Fixed Header */}
       <View style={styles.fixedHeader}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
-          onPress={handleBack}
+          onPress={handleLogout}
         >
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>Log out</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Manage Rank</Text>
         {!isEditing ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={handleEdit}
           >
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         ) : activeTab === 'terminals' ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.doneButton}
             onPress={() => setIsEditing(false)}
           >
@@ -637,10 +575,10 @@ const ManageRankScreen: React.FC = () => {
           <View style={styles.spacer} />
         )}
       </View>
-      
+
       <ScrollView contentContainerStyle={[
-        styles.scrollContent, 
-        isEditing && activeTab !== 'terminals' && styles.scrollContentWithButtons
+        styles.scrollContent,
+        isEditing && activeTab !== 'terminals' && styles.scrollContentWithButtons,
       ]}>
         {/* Map placeholder as full-width element */}
         <View style={styles.mapPlaceholder}>
@@ -648,16 +586,16 @@ const ManageRankScreen: React.FC = () => {
             Map integration will be implemented here
           </Text>
         </View>
-        
+
         <View style={styles.contentContainer}>
           <View style={styles.rankInfoSection}>
             <Text style={styles.rankName}>{rankDetails?.name}</Text>
             <Text style={styles.rankLocation}>{rankDetails?.city}, {rankDetails?.province}</Text>
           </View>
-          
+
           {/* Navigation tabs - without Contact tab */}
           <View style={styles.tabContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'details' && styles.activeTab]}
               onPress={() => setActiveTab('details')}
             >
@@ -665,8 +603,8 @@ const ManageRankScreen: React.FC = () => {
                 Details
               </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.tab, activeTab === 'terminals' && styles.activeTab]}
               onPress={() => setActiveTab('terminals')}
             >
@@ -675,24 +613,24 @@ const ManageRankScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           {/* Tab content */}
           {renderTabContent()}
         </View>
       </ScrollView>
-      
+
       {/* Fixed Bottom Action Buttons */}
       {isEditing && activeTab !== 'terminals' && (
         <View style={styles.fixedActionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.cancelButton, isLoading && styles.disabledButton]}
             onPress={handleCancel}
             disabled={isLoading}
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={[styles.saveButton, isLoading && styles.disabledButton]}
             onPress={handleSave}
             disabled={isLoading}
@@ -703,7 +641,7 @@ const ManageRankScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-      
+
       {/* Terminal Editor Modal */}
       <TerminalEditorModal
         visible={showTerminalModal}
@@ -959,4 +897,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ManageRankScreen; 
+export default ManageRankScreen;

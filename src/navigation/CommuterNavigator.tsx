@@ -1,37 +1,33 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
 
-// Import commuter screens
 import HomeScreen from '../screens/HomeScreen';
-// TODO: Add other commuter screens when implemented
-// import SearchRanksScreen from '../screens/commuter/SearchRanksScreen';
-// import PlanTripScreen from '../screens/commuter/PlanTripScreen';
-// import TripDetailsScreen from '../screens/commuter/TripDetailsScreen';
-// import ProfileScreen from '../screens/commuter/ProfileScreen';
+import ApplyScreen from '../screens/commuter/ApplyScreen';
+import MyApplicationScreen from '../screens/commuter/MyApplicationScreen';
 
 export type CommuterStackParamList = {
   Home: undefined;
-  SearchRanks: undefined;
-  PlanTrip: undefined;
-  TripDetails: { tripId: string };
-  Profile: undefined;
+  /** applicationId: edit and resubmit that application */
+  Apply: { applicationId?: number } | undefined;
+  MyApplication: undefined;
 };
 
 const Stack = createNativeStackNavigator<CommuterStackParamList>();
 
 const CommuterNavigator: React.FC = () => {
+  const { signUpIntent } = useAuth();
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      // People who signed up as "Rank admin" go straight to step 2, the application
+      initialRouteName={signUpIntent === 'RANK_ADMIN' ? 'Apply' : 'Home'}
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Home" component={HomeScreen} />
-      {/* Add other commuter screens here when implemented */}
-      {/* 
-      <Stack.Screen name="SearchRanks" component={SearchRanksScreen} />
-      <Stack.Screen name="PlanTrip" component={PlanTripScreen} />
-      <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      */}
+      <Stack.Screen name="Apply" component={ApplyScreen} />
+      <Stack.Screen name="MyApplication" component={MyApplicationScreen} />
     </Stack.Navigator>
   );
 };
 
-export default CommuterNavigator; 
+export default CommuterNavigator;

@@ -1,7 +1,2 @@
-// __mocks__/@react-native-async-storage/async-storage.js
-export default {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn(),
-  };
+// The package's own in-memory mock (supports multiGet/multiSet/multiRemove)
+export { default } from '@react-native-async-storage/async-storage/jest/async-storage-mock';
