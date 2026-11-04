@@ -1,126 +1,58 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 import LoginScreen from '../../src/screens/LoginScreen';
 
-// Create mock navigation
 const mockNavigate = jest.fn();
-const mockNavigation = {
-  navigate: mockNavigate,
-};
-
-// Mock navigation hook
-jest.mock('@react-navigation/native', () => {
-  return {
-    ...jest.requireActual('@react-navigation/native'),
-    useNavigation: () => mockNavigation,
-  };
-});
-
-// Mock auth context
-const mockLogin = jest.fn();
-jest.mock('../../src/context/AuthContext', () => ({
-  useAuth: () => ({
-    login: mockLogin,
-    error: null,
-  }),
+jest.mock('@react-navigation/native', () => ({
+  ...jest.requireActual('@react-navigation/native'),
+  useNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn() }),
 }));
 
-// Mock Alert
-jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
-
-// Mock styles
-jest.mock('../../src/styles/loginScreen.styles', () => ({
-  styles: {
-    container: {},
-    title: {},
-    subtitle: {},
-    form: {},
-    input: {},
-    button: {},
-    buttonText: {},
-    linkButton: {},
-    linkText: {},
-  },
+const mockLogin = jest.fn();
+jest.mock('../../src/context/AuthContext', () => ({
+  useAuth: () => ({ login: mockLogin }),
 }));
 
 describe('LoginScreen', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => jest.clearAllMocks());
+
+  it('asks for email or rank code', () => {
+    const { getByText } = render(<LoginScreen />);
+    expect(getByText('Email or rank code')).toBeTruthy();
+    expect(getByText('Rank accounts log in with their rank code, e.g. CTR001')).toBeTruthy();
   });
 
-  it('renders correctly', () => {
-    const { getByText, getByPlaceholderText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    expect(getByText('Welcome Back')).toBeTruthy();
-    expect(getByText('Sign in to continue')).toBeTruthy();
-    expect(getByPlaceholderText('Email')).toBeTruthy();
-    expect(getByPlaceholderText('Password')).toBeTruthy();
-    expect(getByText('Sign In')).toBeTruthy();
-    expect(getByText("Don't have an account? Sign up")).toBeTruthy();
-  });
-
-  it('validates fields before submitting', () => {
-    const { getByText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    // Try to submit without filling fields
-    fireEvent.press(getByText('Sign In'));
-    
-    // We now use form validation state instead of Alerts
+  it('requires both fields', async () => {
+    const { getByTestId, findByText } = render(<LoginScreen />);
+    fireEvent.press(getByTestId('login-button'));
+    expect(await findByText('Enter your email or rank code and your password')).toBeTruthy();
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
-  it('validates email format', () => {
-    const { getByText, getByPlaceholderText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    // Enter invalid email
-    fireEvent.changeText(getByPlaceholderText('Email'), 'invalid-email');
-    fireEvent.changeText(getByPlaceholderText('Password'), 'password123');
-    fireEvent.press(getByText('Sign In'));
-    
-    // We now use form validation state instead of Alerts
-    expect(mockLogin).not.toHaveBeenCalled();
+  it('logs in with a rank code', async () => {
+    mockLogin.mockResolvedValue({});
+    const { getByTestId } = render(<LoginScreen />);
+    fireEvent.changeText(getByTestId('identifier-input'), 'CTR001');
+    fireEvent.changeText(getByTestId('password-input'), 'Example-Rank-Pass-1');
+    fireEvent.press(getByTestId('login-button'));
+    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('CTR001', 'Example-Rank-Pass-1'));
   });
 
-  it('submits login with valid data', async () => {
-    mockLogin.mockResolvedValue({ success: true });
-    
-    const { getByText, getByPlaceholderText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    // Enter valid data
-    fireEvent.changeText(getByPlaceholderText('Email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Password'), 'password123');
-    fireEvent.press(getByText('Sign In'));
-    
-    await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123',
-      });
-    });
+  it("shows the backend's message when login fails", async () => {
+    mockLogin.mockRejectedValue({ response: { status: 401, data: { error: 'Incorrect login or password' } } });
+    const { getByTestId, findByText } = render(<LoginScreen />);
+    fireEvent.changeText(getByTestId('identifier-input'), 'rider@travy.local');
+    fireEvent.changeText(getByTestId('password-input'), 'wrong');
+    fireEvent.press(getByTestId('login-button'));
+    expect(await findByText('Incorrect login or password')).toBeTruthy();
   });
 
-  it('handles login failure', async () => {
-    mockLogin.mockRejectedValue({ success: false, error: 'Login failed' });
-    
-    const { getByText, getByPlaceholderText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    // Enter valid data
-    fireEvent.changeText(getByPlaceholderText('Email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Password'), 'password123');
-    fireEvent.press(getByText('Sign In'));
-    
-    await waitFor(() => {
-      // Error is now handled in form state
-      expect(mockLogin).toHaveBeenCalled();
-    });
+  it('explains when the server is unreachable', async () => {
+    mockLogin.mockRejectedValue(new Error('Network Error'));
+    const { getByTestId, findByText } = render(<LoginScreen />);
+    fireEvent.changeText(getByTestId('identifier-input'), 'rider@travy.local');
+    fireEvent.changeText(getByTestId('password-input'), 'Example-Pass-1');
+    fireEvent.press(getByTestId('login-button'));
+    expect(await findByText('Cannot reach the Travy server')).toBeTruthy();
   });
-
-  it('navigates to register screen', () => {
-    const { getByText } = render(<LoginScreen navigation={mockNavigation as any} />);
-    
-    fireEvent.press(getByText("Don't have an account? Sign up"));
-    
-    expect(mockNavigate).toHaveBeenCalledWith('Register');
-  });
-}); 
+});

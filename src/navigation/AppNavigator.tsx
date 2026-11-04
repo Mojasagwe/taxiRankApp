@@ -2,45 +2,48 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { Loading } from '../components/ui';
 
-// Import navigators
 import AuthNavigator from './AuthNavigator';
 import CommuterNavigator from './CommuterNavigator';
-import AdminNavigator from './AdminNavigator';
-import SuperAdminNavigator from './SuperAdminNavigator';
+import RankAdminNavigator from './RankAdminNavigator';
+import SystemAdminNavigator from './SystemAdminNavigator';
+import ChangePasswordScreen from '../screens/auth/ChangePasswordScreen';
 
-// Create a new RootStackParamList for the main navigator
 export type RootStackParamList = {
   Auth: undefined;
+  ChangePassword: undefined;
+  SystemAdmin: undefined;
+  RankAdmin: undefined;
   Commuter: undefined;
-  Admin: undefined;
-  SuperAdmin: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+/**
+ * Picks the screens from the account's permissions, never its profile name, so a
+ * new profile only needs the right permissions on the backend.
+ */
 const AppNavigator: React.FC = () => {
-  const { user, loading, isAdmin, isSuperAdmin } = useAuth();
+  const { user, loading, can } = useAuth();
 
   if (loading) {
-    // You might want to show a loading screen here
-    return null;
+    return <Loading />;
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          // Auth Navigator - screens for authentication flow
           <Stack.Screen name="Auth" component={AuthNavigator} />
-        ) : isSuperAdmin() ? (
-          // Super Admin Navigator - screens for super admin users
-          <Stack.Screen name="SuperAdmin" component={SuperAdminNavigator} />
-        ) : isAdmin() ? (
-          // Admin Navigator - screens for rank admin users
-          <Stack.Screen name="Admin" component={AdminNavigator} />
+        ) : user.mustChangePassword ? (
+          // The backend blocks everything else until a temporary password is replaced
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        ) : can('APPLICATIONS_REVIEW') || can('USERS_VIEW') ? (
+          <Stack.Screen name="SystemAdmin" component={SystemAdminNavigator} />
+        ) : can('RANK_MANAGE_OWN') ? (
+          <Stack.Screen name="RankAdmin" component={RankAdminNavigator} />
         ) : (
-          // Commuter Navigator - screens for regular commuter users
           <Stack.Screen name="Commuter" component={CommuterNavigator} />
         )}
       </Stack.Navigator>
@@ -48,4 +51,4 @@ const AppNavigator: React.FC = () => {
   );
 };
 
-export default AppNavigator; 
+export default AppNavigator;

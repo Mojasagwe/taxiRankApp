@@ -1,145 +1,56 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from '../../src/screens/HomeScreen';
-import { useAuth } from '../../src/context/AuthContext';
+import { applicationService } from '../../src/services/api/applications';
 
-// Mock the useAuth hook
-jest.mock('../../src/context/AuthContext', () => {
-  const originalModule = jest.requireActual('../../src/context/AuthContext');
-  
-  return {
-    ...originalModule,
-    useAuth: jest.fn()
-  };
-});
-
-// Mock the navigation
+const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => {
-  const actualNav = jest.requireActual('@react-navigation/native');
+  const React = require('react');
   return {
-    ...actualNav,
-    useNavigation: () => ({
-      navigate: jest.fn(),
-    }),
+    ...jest.requireActual('@react-navigation/native'),
+    useNavigation: () => ({ navigate: mockNavigate }),
+    useFocusEffect: (callback: () => void) => React.useEffect(callback, [callback]),
   };
 });
+
+const mockCan = jest.fn((p: string) => p === 'APPLICATIONS_SUBMIT');
+jest.mock('../../src/context/AuthContext', () => ({
+  useAuth: () => ({ user: { firstName: 'Lerato' }, logout: jest.fn(), can: mockCan }),
+}));
+
+jest.mock('../../src/services/api/ranks', () => ({
+  rankService: {
+    list: jest.fn().mockResolvedValue([
+      { id: 1, code: 'CTR001', name: 'Central Taxi Rank', address: '123 Main Street', city: 'Johannesburg', province: 'Gauteng', operatingHours: '05:00-22:00', isActive: true },
+    ]),
+  },
+}));
+jest.mock('../../src/services/api/applications', () => ({ applicationService: { mine: jest.fn() } }));
 
 describe('HomeScreen', () => {
-  const logoutMock = jest.fn();
-  
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => jest.clearAllMocks());
+
+  it('greets the rider and lists ranks', async () => {
+    (applicationService.mine as jest.Mock).mockResolvedValue([]);
+    const { findByText, getByText } = render(<HomeScreen />);
+    expect(getByText('Hi, Lerato')).toBeTruthy();
+    expect(await findByText('Central Taxi Rank')).toBeTruthy();
   });
-  
-  it('renders user welcome message', () => {
-    // Mock regular user
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { firstName: 'Test', role: 'USER' },
-      logout: logoutMock,
-      isAdmin: () => false,
-      isSuperAdmin: () => false
-    });
-    
-    const { getByText, queryByText } = render(
-      <NavigationContainer>
-        <HomeScreen />
-      </NavigationContainer>
-    );
-    
-    // Check that the welcome message includes the user's name
-    expect(getByText('Welcome, Test')).toBeTruthy();
-    
-    // Check that it shows the commuter dashboard, not admin dashboard
-    expect(getByText('Commuter Dashboard')).toBeTruthy();
-    expect(queryByText('Admin Dashboard')).toBeNull();
-    
-    // Check that logout button is rendered
-    expect(getByText('Logout')).toBeTruthy();
+
+  it('offers to apply when there is no application', async () => {
+    (applicationService.mine as jest.Mock).mockResolvedValue([]);
+    const { findByText } = render(<HomeScreen />);
+    fireEvent.press(await findByText('Apply to manage a rank'));
+    expect(mockNavigate).toHaveBeenCalledWith('Apply');
   });
-  
-  it('renders admin dashboard for admin users', () => {
-    // Mock admin user
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { 
-        firstName: 'Admin', 
-        role: 'ADMIN',
-        managedRanks: ['rank1', 'rank2'] 
-      },
-      logout: logoutMock,
-      isAdmin: () => true,
-      isSuperAdmin: () => false
-    });
-    
-    const { getByText, queryByText } = render(
-      <NavigationContainer>
-        <HomeScreen />
-      </NavigationContainer>
-    );
-    
-    // Check that the welcome message includes the admin's name
-    expect(getByText('Welcome, Admin')).toBeTruthy();
-    
-    // Check that it shows the admin dashboard, not rider dashboard
-    expect(getByText('Admin Dashboard')).toBeTruthy();
-    expect(queryByText('Rider Dashboard')).toBeNull();
-    
-    // Check that admin-specific information is shown
-    expect(getByText('Role: ADMIN')).toBeTruthy();
-    expect(getByText('Managed Ranks: 2')).toBeTruthy();
-    expect(getByText('View Pending Admin Requests')).toBeTruthy();
+
+  it('shows the latest application status', async () => {
+    (applicationService.mine as jest.Mock).mockResolvedValue([
+      { id: 3, status: 'INFO_REQUESTED', proposedRank: { name: 'Bree Street Taxi Rank' }, applicant: {}, designation: 'Marshal', createdAt: '', updatedAt: '' },
+    ]);
+    const { findByText } = render(<HomeScreen />);
+    expect(await findByText('Info requested')).toBeTruthy();
+    fireEvent.press(await findByText('View my application'));
+    expect(mockNavigate).toHaveBeenCalledWith('MyApplication');
   });
-  
-  it('renders super admin dashboard for super admin users', () => {
-    // Mock super admin user
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { 
-        firstName: 'SuperAdmin', 
-        role: 'SUPER_ADMIN'
-      },
-      logout: logoutMock,
-      isAdmin: () => false,
-      isSuperAdmin: () => true
-    });
-    
-    const { getByText, queryByText } = render(
-      <NavigationContainer>
-        <HomeScreen />
-      </NavigationContainer>
-    );
-    
-    // Check that the welcome message includes the super admin's name
-    expect(getByText('Welcome, SuperAdmin')).toBeTruthy();
-    
-    // Check that it shows the super admin dashboard, not other dashboards
-    expect(getByText('Super Admin Dashboard')).toBeTruthy();
-    expect(queryByText('Admin Dashboard')).toBeNull();
-    expect(queryByText('Commuter Dashboard')).toBeNull();
-    
-    // Check that super admin-specific information is shown
-    expect(getByText('Role: SUPER_ADMIN')).toBeTruthy();
-    expect(getByText('View Pending Admin Requests')).toBeTruthy();
-  });
-  
-  it('calls logout when the logout button is pressed', () => {
-    // Mock regular user
-    (useAuth as jest.Mock).mockReturnValue({
-      user: { firstName: 'Test', role: 'USER' },
-      logout: logoutMock,
-      isAdmin: () => false,
-      isSuperAdmin: () => false
-    });
-    
-    const { getByText } = render(
-      <NavigationContainer>
-        <HomeScreen />
-      </NavigationContainer>
-    );
-    
-    // Press the logout button
-    fireEvent.press(getByText('Logout'));
-    
-    // Check that logout was called
-    expect(logoutMock).toHaveBeenCalledTimes(1);
-  });
-}); 
+});
